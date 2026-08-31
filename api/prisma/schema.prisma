@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +5,119 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  SHOP_OWNER
+  DELIVERY_COMPANY
+  DRIVER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PICKED_UP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COLLECTED
+  PAID_TO_SHOP
+  NOT_COLLECTED
+}
+
+model User {
+  id               String  @id @default(uuid())
+  name             String
+  email            String  @unique
+  password         String
+  role             Role
+  phoneNumber      String
+  imageUrl         String?
+  refreshTokenHash String?
+
+  shopOwner       ShopOwner?
+  driver          Driver?
+  deliveryCompany DeliveryCompany?
+}
+
+model ShopOwner {
+  userId String @id
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+  orders   Order[]
+}
+
+model DeliveryCompany {
+  userId        String  @id
+  deliveryPrice Decimal @db.Decimal(10, 2)
+  openTime      String
+  closeTime     String
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drivers Driver[]
+  orders  Order[]
+}
+
+model Driver {
+  userId    String @id
+  companyId String
+
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company DeliveryCompany @relation(fields: [companyId], references: [userId])
+  orders  Order[]
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  shopOwnerId String
+
+  shopOwner  ShopOwner   @relation(fields: [shopOwnerId], references: [userId])
+  orderItems OrderItem[]
+}
+
+model Order {
+  id                String  @id @default(uuid())
+  shopOwnerId       String
+  deliveryCompanyId String?
+  driverId          String?
+
+  customerName    String
+  customerPhone   String
+  customerAddress String
+  customerNote    String?
+
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  pickupCode     String  @unique
+  pickupCodeUsed Boolean @default(false)
+
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  returnReason  String?
+
+  shopOwner       ShopOwner        @relation(fields: [shopOwnerId], references: [userId])
+  deliveryCompany DeliveryCompany? @relation(fields: [deliveryCompanyId], references: [userId])
+  driver          Driver?          @relation(fields: [driverId], references: [userId])
+  orderItems      OrderItem[]
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 }
