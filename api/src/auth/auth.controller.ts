@@ -35,7 +35,7 @@ export class AuthController {
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: isProd,
+
       sameSite: cookieSameSite as any,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
