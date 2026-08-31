@@ -106,6 +106,7 @@ export class AuthController {
     });
   }
 
+  //عشان ترجع اليوزر الي عامل login
   @Get('me')
   @UseGuards(JwtGuard)
   getMe(@CurrentUser() user) {
