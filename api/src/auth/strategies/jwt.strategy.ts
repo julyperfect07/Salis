@@ -1,12 +1,14 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { Strategy } from 'passport-jwt';
+import type { JwtUser } from '../types/jwt-user.type';
+import { Role } from '../../../generated/prisma/enums';
 
 interface JwtPayload {
   sub: string;
   email: string;
-  role: string;
+  role: Role;
 }
 
 @Injectable()
@@ -16,13 +18,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Error('JWT_SECRET is not defined');
     }
     super({
-      jwtFromRequest: (req: Request) => req?.cookies?.access_token,
+      jwtFromRequest: (req: Request) => req?.cookies?.access_token ?? null,
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET,
     });
   }
 
-  async validate(payload: JwtPayload) {
+  validate(payload: JwtPayload): JwtUser {
     return {
       id: payload.sub,
       email: payload.email,
@@ -30,18 +32,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

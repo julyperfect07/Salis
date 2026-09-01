@@ -76,10 +76,11 @@ model Driver {
 }
 
 model Product {
-  id          String  @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   description String?
-  price       Decimal @db.Decimal(10, 2)
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrls   String[] @default([])
   shopOwnerId String
 
   shopOwner  ShopOwner   @relation(fields: [shopOwnerId], references: [userId])
