@@ -5,10 +5,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomInt } from 'crypto';
-import { Role } from '../../generated/prisma/enums';
+import { OrderStatus, Role } from '../../generated/prisma/enums';
 import type { JwtUser } from '../auth/types/jwt-user.type';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const orderInclude = {
@@ -45,12 +46,23 @@ const orderInclude = {
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Ensure the user is a shop owner
   private ensureShopOwner(user: JwtUser) {
     if (user.role !== Role.SHOP_OWNER) {
-      throw new ForbiddenException('Only shop owners can access these orders');
+      throw new ForbiddenException('Only shop owners can perform this action');
     }
   }
 
+  // Ensure the user is a delivery company
+  private ensureDeliveryCompany(user: JwtUser) {
+    if (user.role !== Role.DELIVERY_COMPANY) {
+      throw new ForbiddenException(
+        'Only delivery companies can perform this action',
+      );
+    }
+  }
+
+  // Generate a unique six-digit pickup code
   private async generateUniquePickupCode() {
     let pickupCode: string;
     let existingOrder: { id: string } | null;
@@ -71,6 +83,7 @@ export class OrdersService {
     return pickupCode;
   }
 
+  // Find an order belonging to the shop owner
   private async findOwnedOrder(shopOwnerId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: {
@@ -87,6 +100,7 @@ export class OrdersService {
     return order;
   }
 
+  // Create and automatically assign an order
   async createOrder(user: JwtUser, createOrderDto: CreateOrderDto) {
     this.ensureShopOwner(user);
 
@@ -99,6 +113,7 @@ export class OrdersService {
       items,
     } = createOrderDto;
 
+    // بس عشان اتأكد انو نفس المنتج ما يتكرر اكثر من مرة بالاوردر
     const productIds = items.map((item) => item.productId);
 
     const uniqueProductIds = new Set(productIds);
@@ -188,17 +203,20 @@ export class OrdersService {
     };
   }
 
+  // Get the shop owner's orders
   async getOrders(user: JwtUser, paginationDto: PaginationDto) {
     this.ensureShopOwner(user);
 
     const { page, limit } = paginationDto;
     const skip = (page - 1) * limit;
 
+    const where = {
+      shopOwnerId: user.id,
+    };
+
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
-        where: {
-          shopOwnerId: user.id,
-        },
+        where,
         include: orderInclude,
         skip,
         take: limit,
@@ -208,9 +226,7 @@ export class OrdersService {
       }),
 
       this.prisma.order.count({
-        where: {
-          shopOwnerId: user.id,
-        },
+        where,
       }),
     ]);
 
@@ -226,6 +242,7 @@ export class OrdersService {
     };
   }
 
+  // Get one order belonging to the shop owner
   async getOrderById(user: JwtUser, orderId: string) {
     this.ensureShopOwner(user);
 
@@ -234,6 +251,136 @@ export class OrdersService {
     return {
       message: 'Order retrieved successfully',
       order,
+    };
+  }
+
+  // Get orders assigned to the delivery company
+  async getAssignedOrders(user: JwtUser, paginationDto: PaginationDto) {
+    this.ensureDeliveryCompany(user);
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const where = {
+      deliveryCompanyId: user.id,
+    };
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        include: orderInclude,
+        skip,
+        take: limit,
+        orderBy: {
+          id: 'asc',
+        },
+      }),
+
+      this.prisma.order.count({
+        where,
+      }),
+    ]);
+
+    return {
+      message: 'Assigned orders retrieved successfully',
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // Accept an order assigned to the company
+  async acceptOrder(user: JwtUser, orderId: string) {
+    this.ensureDeliveryCompany(user);
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        deliveryCompanyId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Only pending orders can be accepted');
+    }
+
+    const acceptedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.ACCEPTED,
+      },
+      include: orderInclude,
+    });
+
+    return {
+      message: 'Order accepted successfully',
+      order: acceptedOrder,
+    };
+  }
+
+  // Assign one of the company's drivers
+  async assignDriver(
+    user: JwtUser,
+    orderId: string,
+    assignDriverDto: AssignDriverDto,
+  ) {
+    this.ensureDeliveryCompany(user);
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        deliveryCompanyId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.status !== OrderStatus.ACCEPTED) {
+      throw new BadRequestException('The order must be accepted first');
+    }
+
+    const driver = await this.prisma.driver.findFirst({
+      where: {
+        userId: assignDriverDto.driverId,
+        companyId: user.id,
+      },
+    });
+
+    if (!driver) {
+      throw new NotFoundException('Driver does not belong to this company');
+    }
+
+    if (order.driverId) {
+      throw new BadRequestException(
+        'A driver is already assigned to this order',
+      );
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        driverId: driver.userId,
+      },
+      include: orderInclude,
+    });
+
+    return {
+      message: 'Driver assigned successfully',
+      order: updatedOrder,
     };
   }
 }
