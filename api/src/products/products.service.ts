@@ -8,6 +8,7 @@ import type { JwtUser } from '../auth/types/jwt-user.type';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class ProductsService {
@@ -50,18 +51,40 @@ export class ProductsService {
     };
   }
 
-  async getProducts(user: JwtUser) {
+  async getProducts(user: JwtUser, paginationDto: PaginationDto) {
     this.ensureShopOwner(user);
 
-    const products = await this.prisma.product.findMany({
-      where: {
-        shopOwnerId: user.id,
-      },
-    });
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where: {
+          shopOwnerId: user.id,
+        },
+        skip,
+        take: limit,
+        orderBy: {
+          id: 'asc',
+        },
+      }),
+
+      this.prisma.product.count({
+        where: {
+          shopOwnerId: user.id,
+        },
+      }),
+    ]);
 
     return {
       message: 'Products retrieved successfully',
       products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 

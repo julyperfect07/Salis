@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { JwtGuard } from '../auth/guards/jwt.guard';
 import type { JwtUser } from '../auth/types/jwt-user.type';
@@ -15,6 +16,8 @@ import { CurrentUser } from '../common/decorators/currentuser.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
+
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('products')
 @UseGuards(JwtGuard)
@@ -30,8 +33,11 @@ export class ProductsController {
   }
 
   @Get()
-  getProducts(@CurrentUser() user: JwtUser) {
-    return this.productsService.getProducts(user);
+  getProducts(
+    @CurrentUser() user: JwtUser,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.productsService.getProducts(user, paginationDto);
   }
 
   @Get(':id')
