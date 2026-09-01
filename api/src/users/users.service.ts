@@ -32,10 +32,11 @@ export class UsersService {
       createUserDto.role === Role.DELIVERY_COMPANY &&
       (createUserDto.deliveryPrice === undefined ||
         !createUserDto.openTime ||
-        !createUserDto.closeTime)
+        !createUserDto.closeTime ||
+        !createUserDto.coverageZones?.length)
     ) {
       throw new BadRequestException(
-        'Delivery price, open time and close time are required',
+        'Delivery price, working times and coverage zones are required',
       );
     }
 
@@ -92,6 +93,7 @@ export class UsersService {
             deliveryPrice: createUserDto.deliveryPrice!,
             openTime: createUserDto.openTime!,
             closeTime: createUserDto.closeTime!,
+            coverageZones: createUserDto.coverageZones!,
           },
         });
       }

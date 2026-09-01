@@ -7,6 +7,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum DeliveryZone {
+  AMMAN_CENTRAL
+  AMMAN_WEST
+  AMMAN_EAST
+  AMMAN_NORTH
+  AMMAN_SOUTH
+}
+
 enum Role {
   SHOP_OWNER
   DELIVERY_COMPANY
@@ -56,10 +64,11 @@ model ShopOwner {
 }
 
 model DeliveryCompany {
-  userId        String  @id
-  deliveryPrice Decimal @db.Decimal(10, 2)
+  userId        String         @id
+  deliveryPrice Decimal        @db.Decimal(10, 2)
   openTime      String
   closeTime     String
+  coverageZones DeliveryZone[] @default([])
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   drivers Driver[]
@@ -102,6 +111,8 @@ model Order {
 
   pickupCode     String  @unique
   pickupCodeUsed Boolean @default(false)
+
+  deliveryZone DeliveryZone?
 
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)

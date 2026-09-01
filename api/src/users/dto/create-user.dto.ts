@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
+  IsArray,
   IsEmail,
   IsEnum,
   IsNumber,
@@ -11,7 +13,7 @@ import {
   MinLength,
   ValidateIf,
 } from 'class-validator';
-import { Role } from '../../../generated/prisma/enums';
+import { DeliveryZone, Role } from '../../../generated/prisma/enums';
 
 export class CreateUserDto {
   @IsString()
@@ -34,25 +36,25 @@ export class CreateUserDto {
   @IsUrl()
   imageUrl?: string;
 
-  @ValidateIf((dto: CreateUserDto) =>
-    dto.role === Role.DELIVERY_COMPANY,
-  )
+  @ValidateIf((dto: CreateUserDto) => dto.role === Role.DELIVERY_COMPANY)
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   deliveryPrice?: number;
 
-  @ValidateIf((dto: CreateUserDto) =>
-    dto.role === Role.DELIVERY_COMPANY,
-  )
+  @ValidateIf((dto: CreateUserDto) => dto.role === Role.DELIVERY_COMPANY)
   @IsString()
   openTime?: string;
 
-  @ValidateIf((dto: CreateUserDto) =>
-    dto.role === Role.DELIVERY_COMPANY,
-  )
+  @ValidateIf((dto: CreateUserDto) => dto.role === Role.DELIVERY_COMPANY)
   @IsString()
   closeTime?: string;
+
+  @ValidateIf((dto: CreateUserDto) => dto.role === Role.DELIVERY_COMPANY)
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsEnum(DeliveryZone, { each: true })
+  coverageZones?: DeliveryZone[];
 
   @ValidateIf((dto: CreateUserDto) => dto.role === Role.DRIVER)
   @IsUUID()
