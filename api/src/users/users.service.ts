@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,8 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import type { JwtUser } from '../auth/types/jwt-user.type';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -109,5 +112,59 @@ export class UsersService {
 
       return user;
     });
+  }
+
+  // Get drivers belonging to the logged-in delivery company
+  async getCompanyDrivers(user: JwtUser, paginationDto: PaginationDto) {
+    if (user.role !== Role.DELIVERY_COMPANY) {
+      throw new ForbiddenException(
+        'Only delivery companies can view their drivers',
+      );
+    }
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const where = {
+      companyId: user.id,
+    };
+
+    const [drivers, total] = await Promise.all([
+      this.prisma.driver.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          userId: 'asc',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phoneNumber: true,
+              imageUrl: true,
+              role: true,
+            },
+          },
+        },
+      }),
+
+      this.prisma.driver.count({
+        where,
+      }),
+    ]);
+
+    return {
+      message: 'Company drivers retrieved successfully',
+      drivers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

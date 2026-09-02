@@ -13,6 +13,8 @@ import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
 import { FailOrderDto } from './dto/fail-order.dto';
+import { OrderQueryDto } from './dto/order-query.dto';
+import type { Prisma } from '../../generated/prisma/client';
 
 const orderInclude = {
   deliveryCompany: {
@@ -206,14 +208,16 @@ export class OrdersService {
   }
 
   // Get the shop owner's orders
-  async getOrders(user: JwtUser, paginationDto: PaginationDto) {
+  // Get the shop owner's orders with optional status filtering
+  async getOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
     this.ensureShopOwner(user);
 
-    const { page, limit } = paginationDto;
+    const { page, limit, status } = orderQueryDto;
     const skip = (page - 1) * limit;
 
     const where = {
       shopOwnerId: user.id,
+      ...(status && { status }),
     };
 
     const [orders, total] = await Promise.all([
@@ -244,11 +248,59 @@ export class OrdersService {
     };
   }
 
-  // Get one order belonging to the shop owner
+  // Get one order based on the user's role and ownership
   async getOrderById(user: JwtUser, orderId: string) {
-    this.ensureShopOwner(user);
+    let where: Prisma.OrderWhereInput = {
+      id: orderId,
+    };
 
-    const order = await this.findOwnedOrder(user.id, orderId);
+    switch (user.role) {
+      case Role.SHOP_OWNER:
+        where = {
+          ...where,
+          shopOwnerId: user.id,
+        };
+        break;
+
+      case Role.DELIVERY_COMPANY:
+        where = {
+          ...where,
+          deliveryCompanyId: user.id,
+        };
+        break;
+
+      case Role.DRIVER:
+        where = {
+          ...where,
+          driverId: user.id,
+        };
+        break;
+
+      case Role.ADMIN:
+        break;
+
+      default:
+        throw new ForbiddenException('You cannot view this order');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where,
+      include: orderInclude,
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    // Only the shop owner needs access to the pickup code
+    if (user.role !== Role.SHOP_OWNER) {
+      const { pickupCode, ...safeOrder } = order;
+
+      return {
+        message: 'Order retrieved successfully',
+        order: safeOrder,
+      };
+    }
 
     return {
       message: 'Order retrieved successfully',
@@ -257,14 +309,16 @@ export class OrdersService {
   }
 
   // Get orders assigned to the delivery company
-  async getAssignedOrders(user: JwtUser, paginationDto: PaginationDto) {
+  // Get company orders with optional status filtering
+  async getAssignedOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
     this.ensureDeliveryCompany(user);
 
-    const { page, limit } = paginationDto;
+    const { page, limit, status } = orderQueryDto;
     const skip = (page - 1) * limit;
 
     const where = {
       deliveryCompanyId: user.id,
+      ...(status && { status }),
     };
 
     const [orders, total] = await Promise.all([
@@ -283,9 +337,11 @@ export class OrdersService {
       }),
     ]);
 
+    const safeOrders = orders.map(({ pickupCode, ...order }) => order);
+
     return {
       message: 'Assigned orders retrieved successfully',
-      orders,
+      orders: safeOrders,
       pagination: {
         page,
         limit,
@@ -387,18 +443,20 @@ export class OrdersService {
   }
 
   // Get orders assigned to the logged-in driver
-  async getDriverOrders(user: JwtUser, paginationDto: PaginationDto) {
+  // Get driver orders with optional status filtering
+  async getDriverOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
     if (user.role !== Role.DRIVER) {
       throw new ForbiddenException('Only drivers can view assigned orders');
     }
 
-    const { page, limit } = paginationDto;
+    const { page, limit, status } = orderQueryDto;
     const skip = (page - 1) * limit;
-    // للاختصار
+
     const where = {
       driverId: user.id,
+      ...(status && { status }),
     };
-    // عشان في 2 استعلامات بدنا نعملهم بنفس الوقت
+
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
@@ -442,6 +500,7 @@ export class OrdersService {
         where,
       }),
     ]);
+
     const safeOrders = orders.map(({ pickupCode, ...order }) => order);
 
     return {

@@ -18,6 +18,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
 import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
 import { FailOrderDto } from './dto/fail-order.dto';
+import { OrderQueryDto } from './dto/order-query.dto';
 
 @Controller('orders')
 @UseGuards(JwtGuard)
@@ -37,18 +38,18 @@ export class OrdersController {
   @Get()
   getOrders(
     @CurrentUser() user: JwtUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() orderQueryDto: OrderQueryDto,
   ) {
-    return this.ordersService.getOrders(user, paginationDto);
+    return this.ordersService.getOrders(user, orderQueryDto);
   }
 
   // Get orders assigned to the delivery company
   @Get('assigned')
   getAssignedOrders(
     @CurrentUser() user: JwtUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() orderQueryDto: OrderQueryDto,
   ) {
-    return this.ordersService.getAssignedOrders(user, paginationDto);
+    return this.ordersService.getAssignedOrders(user, orderQueryDto);
   }
 
   // Get one order by its ID
@@ -82,9 +83,9 @@ export class OrdersController {
   @Get('driver/assigned')
   getDriverOrders(
     @CurrentUser() user: JwtUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() orderQueryDto: OrderQueryDto,
   ) {
-    return this.ordersService.getDriverOrders(user, paginationDto);
+    return this.ordersService.getDriverOrders(user, orderQueryDto);
   }
   // Verify the pickup code and mark the order as picked up
   @Patch(':id/pickup')
