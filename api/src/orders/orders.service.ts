@@ -5,12 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomInt } from 'crypto';
-import { OrderStatus, Role } from '../../generated/prisma/enums';
+import { OrderStatus, PaymentStatus, Role } from '../../generated/prisma/enums';
 import type { JwtUser } from '../auth/types/jwt-user.type';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
+import { FailOrderDto } from './dto/fail-order.dto';
 
 const orderInclude = {
   deliveryCompany: {
@@ -380,6 +382,369 @@ export class OrdersService {
 
     return {
       message: 'Driver assigned successfully',
+      order: updatedOrder,
+    };
+  }
+
+  // Get orders assigned to the logged-in driver
+  async getDriverOrders(user: JwtUser, paginationDto: PaginationDto) {
+    if (user.role !== Role.DRIVER) {
+      throw new ForbiddenException('Only drivers can view assigned orders');
+    }
+
+    const { page, limit } = paginationDto;
+    const skip = (page - 1) * limit;
+    // للاختصار
+    const where = {
+      driverId: user.id,
+    };
+    // عشان في 2 استعلامات بدنا نعملهم بنفس الوقت
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          id: 'desc',
+        },
+        include: {
+          shopOwner: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  phoneNumber: true,
+                },
+              },
+            },
+          },
+          deliveryCompany: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  phoneNumber: true,
+                },
+              },
+            },
+          },
+          orderItems: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      }),
+
+      this.prisma.order.count({
+        where,
+      }),
+    ]);
+    const safeOrders = orders.map(({ pickupCode, ...order }) => order);
+
+    return {
+      message: 'Assigned orders retrieved successfully',
+      orders: safeOrders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // Verify the code and confirm that the driver received the order
+  async pickupOrder(
+    user: JwtUser,
+    orderId: string,
+    verifyPickupCodeDto: VerifyPickupCodeDto,
+  ) {
+    if (user.role !== Role.DRIVER) {
+      throw new ForbiddenException('Only drivers can pick up orders');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        driverId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Assigned order not found');
+    }
+
+    if (order.status !== OrderStatus.ACCEPTED) {
+      throw new BadRequestException('Only accepted orders can be picked up');
+    }
+
+    if (order.pickupCodeUsed) {
+      throw new BadRequestException('Pickup code has already been used');
+    }
+
+    if (order.pickupCode !== verifyPickupCodeDto.pickupCode) {
+      throw new BadRequestException('Invalid pickup code');
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.PICKED_UP,
+        pickupCodeUsed: true,
+      },
+    });
+
+    const { pickupCode, ...safeOrder } = updatedOrder;
+    return {
+      message: 'Order picked up successfully',
+      order: safeOrder,
+    };
+  }
+
+  // Change a picked-up order to out for delivery
+  async startDelivery(user: JwtUser, orderId: string) {
+    if (user.role !== Role.DRIVER) {
+      throw new ForbiddenException('Only drivers can start deliveries');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        driverId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Assigned order not found');
+    }
+
+    if (order.status !== OrderStatus.PICKED_UP) {
+      throw new BadRequestException('Only picked-up orders can start delivery');
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.OUT_FOR_DELIVERY,
+      },
+    });
+
+    const { pickupCode, ...safeOrder } = updatedOrder;
+
+    return {
+      message: 'Delivery started successfully',
+      order: safeOrder,
+    };
+  }
+
+  // Complete the delivery and record the collected payment
+  async deliverOrder(user: JwtUser, orderId: string) {
+    if (user.role !== Role.DRIVER) {
+      throw new ForbiddenException('Only drivers can complete deliveries');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        driverId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Assigned order not found');
+    }
+
+    if (order.status !== OrderStatus.OUT_FOR_DELIVERY) {
+      throw new BadRequestException(
+        'Only orders out for delivery can be delivered',
+      );
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.DELIVERED,
+        paymentStatus: PaymentStatus.COLLECTED,
+      },
+    });
+
+    const { pickupCode, ...safeOrder } = updatedOrder;
+
+    return {
+      message: 'Order delivered successfully',
+      order: safeOrder,
+    };
+  }
+  // Record an unsuccessful delivery attempt
+  async failOrder(user: JwtUser, orderId: string, failOrderDto: FailOrderDto) {
+    if (user.role !== Role.DRIVER) {
+      throw new ForbiddenException('Only drivers can report failed deliveries');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        driverId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Assigned order not found');
+    }
+
+    if (order.status !== OrderStatus.OUT_FOR_DELIVERY) {
+      throw new BadRequestException(
+        'Only orders out for delivery can be marked as failed',
+      );
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.FAILED,
+        paymentStatus: PaymentStatus.NOT_COLLECTED,
+        returnReason: failOrderDto.reason,
+      },
+    });
+
+    const { pickupCode, ...safeOrder } = updatedOrder;
+
+    return {
+      message: 'Failed delivery recorded successfully',
+      order: safeOrder,
+    };
+  }
+
+  // Confirm that the failed order was returned to its shop
+  async confirmReturn(user: JwtUser, orderId: string) {
+    if (user.role !== Role.SHOP_OWNER) {
+      throw new ForbiddenException(
+        'Only shop owners can confirm returned orders',
+      );
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        shopOwnerId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Shop order not found');
+    }
+
+    if (order.status !== OrderStatus.FAILED) {
+      throw new BadRequestException(
+        'Only failed orders can be confirmed as returned',
+      );
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.RETURNED,
+      },
+    });
+
+    return {
+      message: 'Order return confirmed successfully',
+      order: updatedOrder,
+    };
+  }
+
+  // Confirm that the delivery company paid the shop owner
+  async confirmPayment(user: JwtUser, orderId: string) {
+    if (user.role !== Role.SHOP_OWNER) {
+      throw new ForbiddenException(
+        'Only shop owners can confirm received payments',
+      );
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        shopOwnerId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Shop order not found');
+    }
+
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new BadRequestException(
+        'Payment can only be confirmed for delivered orders',
+      );
+    }
+
+    if (order.paymentStatus !== PaymentStatus.COLLECTED) {
+      throw new BadRequestException(
+        'This order does not have a collected payment awaiting confirmation',
+      );
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        paymentStatus: PaymentStatus.PAID_TO_SHOP,
+      },
+    });
+
+    return {
+      message: 'Payment received successfully',
+      order: updatedOrder,
+    };
+  }
+
+  // Cancel a pending order owned by the shop
+  async cancelOrder(user: JwtUser, orderId: string) {
+    if (user.role !== Role.SHOP_OWNER) {
+      throw new ForbiddenException('Only shop owners can cancel orders');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        shopOwnerId: user.id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Shop order not found');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Only pending orders can be cancelled');
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: {
+        id: orderId,
+      },
+      data: {
+        status: OrderStatus.CANCELLED,
+        paymentStatus: PaymentStatus.NOT_COLLECTED,
+      },
+    });
+
+    return {
+      message: 'Order cancelled successfully',
       order: updatedOrder,
     };
   }

@@ -16,6 +16,8 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
+import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
+import { FailOrderDto } from './dto/fail-order.dto';
 
 @Controller('orders')
 @UseGuards(JwtGuard)
@@ -75,5 +77,76 @@ export class OrdersController {
     @Body() assignDriverDto: AssignDriverDto,
   ) {
     return this.ordersService.assignDriver(user, id, assignDriverDto);
+  }
+  // Get orders assigned to the logged-in driver
+  @Get('driver/assigned')
+  getDriverOrders(
+    @CurrentUser() user: JwtUser,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.ordersService.getDriverOrders(user, paginationDto);
+  }
+  // Verify the pickup code and mark the order as picked up
+  @Patch(':id/pickup')
+  pickupOrder(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() verifyPickupCodeDto: VerifyPickupCodeDto,
+  ) {
+    return this.ordersService.pickupOrder(user, id, verifyPickupCodeDto);
+  }
+
+  // Start delivering a picked-up order
+  @Patch(':id/start-delivery')
+  startDelivery(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ordersService.startDelivery(user, id);
+  }
+
+  // Mark an order as successfully delivered
+  @Patch(':id/deliver')
+  deliverOrder(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ordersService.deliverOrder(user, id);
+  }
+  // Mark a delivery attempt as failed
+  @Patch(':id/mark-failed')
+  failOrder(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() failOrderDto: FailOrderDto,
+  ) {
+    return this.ordersService.failOrder(user, id, failOrderDto);
+  }
+
+  // Confirm that a failed order was returned to the shop
+  @Patch(':id/confirm-return')
+  confirmReturn(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ordersService.confirmReturn(user, id);
+  }
+
+  // Confirm receiving payment for a delivered order
+  @Patch(':id/confirm-payment')
+  confirmPayment(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ordersService.confirmPayment(user, id);
+  }
+
+  // Cancel an order before the delivery company accepts it
+  @Patch(':id/cancel')
+  cancelOrder(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.ordersService.cancelOrder(user, id);
   }
 }
