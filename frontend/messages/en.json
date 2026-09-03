@@ -1,0 +1,54 @@
+{
+  "Common": {
+    "appName": "Salis",
+    "login": "Log in",
+    "logout": "Log out",
+    "dashboard": "Dashboard",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "Navigation": {
+    "home": "Home",
+    "features": "Features",
+    "howItWorks": "How it works",
+    "roles": "For businesses",
+    "faq": "FAQ"
+  },
+  "Landing": {
+    "eyebrow": "One platform. Every delivery.",
+    "headline": "Move orders faster with smarter delivery management",
+    "description": "Salis connects shops, delivery companies, and drivers so every order stays organized from pickup to payment.",
+    "getStarted": "Get started",
+    "learnMore": "See how it works",
+    "liveOrders": "Live orders",
+    "delivered": "Delivered",
+    "inProgress": "In progress",
+    "pending": "Pending",
+    "todayRevenue": "Today's revenue",
+    "deliveryRate": "Delivery rate",
+    "recentOrders": "Recent orders",
+    "featuresEyebrow": "Built for everyday delivery",
+    "featuresTitle": "Everything moves better with Salis",
+    "featuresDescription": "Simple tools for every person involved in an order.",
+    "smartAssignment": "Smart assignment",
+    "smartAssignmentDescription": "Orders are matched with delivery companies by coverage and price.",
+    "liveTracking": "Location ready",
+    "liveTrackingDescription": "Pin the customer location and give drivers a clear destination.",
+    "securePickup": "Secure pickup",
+    "securePickupDescription": "Pickup codes confirm that every order reaches the correct driver.",
+    "clearPayments": "Clear payments",
+    "clearPaymentsDescription": "Track product totals, delivery fees, commissions, and settlements."
+  },
+  "Auth": {
+    "login": "Log in",
+    "title": "Welcome back",
+    "description": "Enter your account details to continue to Salis.",
+    "email": "Email address",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "loggingIn": "Logging in...",
+    "success": "Logged in successfully",
+    "adminNotice": "Accounts are created and managed by the Salis administrator."
+  }
+}
