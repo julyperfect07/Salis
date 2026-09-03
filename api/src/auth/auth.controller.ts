@@ -9,38 +9,41 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { CurrentUser } from '../common/decorators/currentuser.decorator';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtGuard } from './guards/jwt.guard';
-import { CurrentUser } from '../common/decorators/currentuser.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Set the authentication cookies
   private setAuthCookies(
     res: Response,
     accessToken: string,
     refreshToken: string,
   ) {
     const isProd = process.env.NODE_ENV === 'production';
+
     const cookieSameSite = isProd ? 'none' : 'lax';
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-
-      sameSite: cookieSameSite as any,
+      secure: isProd,
+      sameSite: cookieSameSite as 'none' | 'lax',
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-
-      sameSite: cookieSameSite as any,
+      secure: isProd,
+      sameSite: cookieSameSite as 'none' | 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
 
+  // Log in and set the authentication cookies
   @Post('login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     const user = await this.authService.validateUser(
@@ -61,6 +64,7 @@ export class AuthController {
     });
   }
 
+  // Log out and clear the authentication cookies
   @Post('logout')
   @UseGuards(JwtGuard)
   async logout(@CurrentUser('id') userId: string, @Res() res: Response) {
@@ -71,7 +75,7 @@ export class AuthController {
     const cookieOptions = {
       httpOnly: true,
       secure: isProd,
-      sameSite: (isProd ? 'none' : 'lax') as any,
+      sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
     };
 
     res.clearCookie('access_token', cookieOptions);
@@ -82,6 +86,7 @@ export class AuthController {
     });
   }
 
+  // Create a new access token
   @Post('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies?.refresh_token;
@@ -97,7 +102,7 @@ export class AuthController {
     res.cookie('access_token', newAccessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: (isProd ? 'none' : 'lax') as any,
+      sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
       maxAge: 15 * 60 * 1000,
     });
 
@@ -106,7 +111,7 @@ export class AuthController {
     });
   }
 
-  //عشان ترجع اليوزر الي عامل login
+  // Return the authenticated user
   @Get('me')
   @UseGuards(JwtGuard)
   getMe(@CurrentUser() user) {

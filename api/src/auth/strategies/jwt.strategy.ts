@@ -1,9 +1,10 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
 import type { Request } from 'express';
 import { Strategy } from 'passport-jwt';
-import type { JwtUser } from '../types/jwt-user.type';
 import { Role } from '../../../generated/prisma/enums';
+import { PrismaService } from '../../prisma/prisma.service';
+import type { JwtUser } from '../types/jwt-user.type';
 
 interface JwtPayload {
   sub: string;
@@ -13,22 +14,43 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
-    if (!process.env.JWT_SECRET) {
+  constructor(private readonly prisma: PrismaService) {
+    const jwtSecret = process.env.JWT_SECRET;
+
+    if (!jwtSecret) {
       throw new Error('JWT_SECRET is not defined');
     }
+
     super({
       jwtFromRequest: (req: Request) => req?.cookies?.access_token ?? null,
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: jwtSecret,
     });
   }
 
-  validate(payload: JwtPayload): JwtUser {
+  async validate(payload: JwtPayload): Promise<JwtUser> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.sub,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException(
+        'Account is inactive or no longer exists',
+      );
+    }
+
     return {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
+      id: user.id,
+      email: user.email,
+      role: user.role,
     };
   }
 }

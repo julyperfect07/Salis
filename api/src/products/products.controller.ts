@@ -18,6 +18,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { ProductQueryDto } from './dto/product-query.dto';
 
 @Controller('products')
 @UseGuards(JwtGuard)
@@ -32,12 +33,13 @@ export class ProductsController {
     return this.productsService.createProduct(user, createProductDto);
   }
 
+  // Get products with filtering, searching, and sorting
   @Get()
   getProducts(
     @CurrentUser() user: JwtUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() productQueryDto: ProductQueryDto,
   ) {
-    return this.productsService.getProducts(user, paginationDto);
+    return this.productsService.getProducts(user, productQueryDto);
   }
 
   @Get(':id')
@@ -63,5 +65,14 @@ export class ProductsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.productsService.deleteProduct(user, id);
+  }
+
+  // Restore one of the shop owner's archived products
+  @Patch(':id/restore')
+  restoreProduct(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.productsService.restoreProduct(user, id);
   }
 }

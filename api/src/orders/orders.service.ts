@@ -5,16 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomInt } from 'crypto';
+import type { Prisma } from '../../generated/prisma/client';
 import { OrderStatus, PaymentStatus, Role } from '../../generated/prisma/enums';
 import type { JwtUser } from '../auth/types/jwt-user.type';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssignDriverDto } from './dto/assign-driver.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
 import { FailOrderDto } from './dto/fail-order.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
-import type { Prisma } from '../../generated/prisma/client';
+import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
+
+const COMMISSION_RATE = 0.025;
 
 const orderInclude = {
   deliveryCompany: {
@@ -66,6 +67,13 @@ export class OrdersService {
     }
   }
 
+  // Ensure the user is a driver
+  private ensureDriver(user: JwtUser) {
+    if (user.role !== Role.DRIVER) {
+      throw new ForbiddenException('Only drivers can perform this action');
+    }
+  }
+
   // Generate a unique six-digit pickup code
   private async generateUniquePickupCode() {
     let pickupCode: string;
@@ -87,7 +95,61 @@ export class OrdersService {
     return pickupCode;
   }
 
-  // Find an order belonging to the shop owner
+  // Build shared order filters
+  private buildOrderFilters(
+    orderQueryDto: OrderQueryDto,
+  ): Prisma.OrderWhereInput {
+    const { status, paymentStatus, search, fromDate, toDate } = orderQueryDto;
+
+    const startDate = fromDate ? new Date(fromDate) : undefined;
+    const endDate = toDate ? new Date(toDate) : undefined;
+
+    if (endDate && /^\d{4}-\d{2}-\d{2}$/.test(toDate!)) {
+      endDate.setUTCHours(23, 59, 59, 999);
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+      throw new BadRequestException('fromDate cannot be later than toDate');
+    }
+
+    const cleanSearch = search?.trim();
+
+    return {
+      ...(status && { status }),
+      ...(paymentStatus && { paymentStatus }),
+
+      ...(cleanSearch && {
+        OR: [
+          {
+            id: {
+              contains: cleanSearch,
+              mode: 'insensitive',
+            },
+          },
+          {
+            customerName: {
+              contains: cleanSearch,
+              mode: 'insensitive',
+            },
+          },
+          {
+            customerPhone: {
+              contains: cleanSearch,
+            },
+          },
+        ],
+      }),
+
+      ...((startDate || endDate) && {
+        createdAt: {
+          ...(startDate && { gte: startDate }),
+          ...(endDate && { lte: endDate }),
+        },
+      }),
+    };
+  }
+
+  // Find an order belonging to a shop owner
   private async findOwnedOrder(shopOwnerId: string, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: {
@@ -104,7 +166,23 @@ export class OrdersService {
     return order;
   }
 
-  // Create and automatically assign an order
+  // Find an order assigned to a driver
+  private async findDriverOrder(driverId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        driverId,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Assigned order not found');
+    }
+
+    return order;
+  }
+
+  // Create an order and calculate financial values
   async createOrder(user: JwtUser, createOrderDto: CreateOrderDto) {
     this.ensureShopOwner(user);
 
@@ -113,13 +191,22 @@ export class OrdersService {
       customerPhone,
       customerAddress,
       customerNote,
+      customerLatitude,
+      customerLongitude,
       deliveryZone,
       items,
     } = createOrderDto;
 
-    // بس عشان اتأكد انو نفس المنتج ما يتكرر اكثر من مرة بالاوردر
-    const productIds = items.map((item) => item.productId);
+    const hasLatitude = customerLatitude !== undefined;
+    const hasLongitude = customerLongitude !== undefined;
 
+    if (hasLatitude !== hasLongitude) {
+      throw new BadRequestException(
+        'Latitude and longitude must be provided together',
+      );
+    }
+
+    const productIds = items.map((item) => item.productId);
     const uniqueProductIds = new Set(productIds);
 
     if (uniqueProductIds.size !== productIds.length) {
@@ -134,17 +221,21 @@ export class OrdersService {
           in: productIds,
         },
         shopOwnerId: user.id,
+        isActive: true,
       },
     });
 
     if (products.length !== productIds.length) {
-      throw new NotFoundException('One or more products were not found');
+      throw new NotFoundException('One or more active products were not found');
     }
 
     const deliveryCompany = await this.prisma.deliveryCompany.findFirst({
       where: {
         coverageZones: {
           has: deliveryZone,
+        },
+        user: {
+          isActive: true,
         },
       },
       orderBy: [
@@ -158,26 +249,42 @@ export class OrdersService {
     });
 
     if (!deliveryCompany) {
-      throw new NotFoundException('No delivery company covers this zone');
+      throw new NotFoundException(
+        'No active delivery company covers this zone',
+      );
     }
 
     const productMap = new Map(
       products.map((product) => [product.id, product]),
     );
 
-    const totalInCents = items.reduce((total, item) => {
+    // Calculate using fils to avoid floating-point errors
+    const productTotalInFils = items.reduce((total, item) => {
       const product = productMap.get(item.productId);
 
       if (!product) {
         throw new NotFoundException('Product not found');
       }
 
-      const priceInCents = Math.round(Number(product.price) * 100);
+      const priceInFils = Math.round(Number(product.price) * 1000);
 
-      return total + priceInCents * item.quantity;
+      return total + priceInFils * item.quantity;
     }, 0);
 
-    const totalPrice = totalInCents / 100;
+    const deliveryFeeInFils = Math.round(
+      Number(deliveryCompany.deliveryPrice) * 1000,
+    );
+
+    const shopCommissionInFils = Math.round(
+      productTotalInFils * COMMISSION_RATE,
+    );
+
+    const deliveryCompanyCommissionInFils = Math.round(
+      deliveryFeeInFils * COMMISSION_RATE,
+    );
+
+    const customerTotalInFils = productTotalInFils + deliveryFeeInFils;
+
     const pickupCode = await this.generateUniquePickupCode();
 
     const order = await this.prisma.order.create({
@@ -188,8 +295,16 @@ export class OrdersService {
         customerPhone,
         customerAddress,
         customerNote,
+        customerLatitude,
+        customerLongitude,
         deliveryZone,
-        totalPrice,
+
+        totalPrice: productTotalInFils / 1000,
+        deliveryFee: deliveryFeeInFils / 1000,
+        shopCommission: shopCommissionInFils / 1000,
+        deliveryCompanyCommission: deliveryCompanyCommissionInFils / 1000,
+        customerTotal: customerTotalInFils / 1000,
+
         pickupCode,
         orderItems: {
           create: items.map((item) => ({
@@ -207,17 +322,16 @@ export class OrdersService {
     };
   }
 
-  // Get the shop owner's orders
-  // Get the shop owner's orders with optional status filtering
+  // Get shop orders with filtering and pagination
   async getOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
     this.ensureShopOwner(user);
 
-    const { page, limit, status } = orderQueryDto;
+    const { page, limit } = orderQueryDto;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: Prisma.OrderWhereInput = {
       shopOwnerId: user.id,
-      ...(status && { status }),
+      ...this.buildOrderFilters(orderQueryDto),
     };
 
     const [orders, total] = await Promise.all([
@@ -227,7 +341,7 @@ export class OrdersService {
         skip,
         take: limit,
         orderBy: {
-          id: 'asc',
+          createdAt: 'desc',
         },
       }),
 
@@ -248,7 +362,7 @@ export class OrdersService {
     };
   }
 
-  // Get one order based on the user's role and ownership
+  // Get one authorized order
   async getOrderById(user: JwtUser, orderId: string) {
     let where: Prisma.OrderWhereInput = {
       id: orderId,
@@ -256,24 +370,15 @@ export class OrdersService {
 
     switch (user.role) {
       case Role.SHOP_OWNER:
-        where = {
-          ...where,
-          shopOwnerId: user.id,
-        };
+        where.shopOwnerId = user.id;
         break;
 
       case Role.DELIVERY_COMPANY:
-        where = {
-          ...where,
-          deliveryCompanyId: user.id,
-        };
+        where.deliveryCompanyId = user.id;
         break;
 
       case Role.DRIVER:
-        where = {
-          ...where,
-          driverId: user.id,
-        };
+        where.driverId = user.id;
         break;
 
       case Role.ADMIN:
@@ -292,7 +397,6 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
 
-    // Only the shop owner needs access to the pickup code
     if (user.role !== Role.SHOP_OWNER) {
       const { pickupCode, ...safeOrder } = order;
 
@@ -308,17 +412,16 @@ export class OrdersService {
     };
   }
 
-  // Get orders assigned to the delivery company
-  // Get company orders with optional status filtering
+  // Get company orders with filtering and pagination
   async getAssignedOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
     this.ensureDeliveryCompany(user);
 
-    const { page, limit, status } = orderQueryDto;
+    const { page, limit } = orderQueryDto;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: Prisma.OrderWhereInput = {
       deliveryCompanyId: user.id,
-      ...(status && { status }),
+      ...this.buildOrderFilters(orderQueryDto),
     };
 
     const [orders, total] = await Promise.all([
@@ -328,7 +431,7 @@ export class OrdersService {
         skip,
         take: limit,
         orderBy: {
-          id: 'asc',
+          createdAt: 'desc',
         },
       }),
 
@@ -380,9 +483,11 @@ export class OrdersService {
       include: orderInclude,
     });
 
+    const { pickupCode, ...safeOrder } = acceptedOrder;
+
     return {
       message: 'Order accepted successfully',
-      order: acceptedOrder,
+      order: safeOrder,
     };
   }
 
@@ -409,20 +514,25 @@ export class OrdersService {
       throw new BadRequestException('The order must be accepted first');
     }
 
+    if (order.driverId) {
+      throw new BadRequestException(
+        'A driver is already assigned to this order',
+      );
+    }
+
     const driver = await this.prisma.driver.findFirst({
       where: {
         userId: assignDriverDto.driverId,
         companyId: user.id,
+        user: {
+          isActive: true,
+        },
       },
     });
 
     if (!driver) {
-      throw new NotFoundException('Driver does not belong to this company');
-    }
-
-    if (order.driverId) {
-      throw new BadRequestException(
-        'A driver is already assigned to this order',
+      throw new NotFoundException(
+        'Active driver does not belong to this company',
       );
     }
 
@@ -436,25 +546,24 @@ export class OrdersService {
       include: orderInclude,
     });
 
+    const { pickupCode, ...safeOrder } = updatedOrder;
+
     return {
       message: 'Driver assigned successfully',
-      order: updatedOrder,
+      order: safeOrder,
     };
   }
 
-  // Get orders assigned to the logged-in driver
-  // Get driver orders with optional status filtering
+  // Get driver orders with filtering and pagination
   async getDriverOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
-    if (user.role !== Role.DRIVER) {
-      throw new ForbiddenException('Only drivers can view assigned orders');
-    }
+    this.ensureDriver(user);
 
-    const { page, limit, status } = orderQueryDto;
+    const { page, limit } = orderQueryDto;
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: Prisma.OrderWhereInput = {
       driverId: user.id,
-      ...(status && { status }),
+      ...this.buildOrderFilters(orderQueryDto),
     };
 
     const [orders, total] = await Promise.all([
@@ -463,7 +572,7 @@ export class OrdersService {
         skip,
         take: limit,
         orderBy: {
-          id: 'desc',
+          createdAt: 'desc',
         },
         include: {
           shopOwner: {
@@ -515,26 +624,15 @@ export class OrdersService {
     };
   }
 
-  // Verify the code and confirm that the driver received the order
+  // Verify the pickup code
   async pickupOrder(
     user: JwtUser,
     orderId: string,
     verifyPickupCodeDto: VerifyPickupCodeDto,
   ) {
-    if (user.role !== Role.DRIVER) {
-      throw new ForbiddenException('Only drivers can pick up orders');
-    }
+    this.ensureDriver(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        driverId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Assigned order not found');
-    }
+    const order = await this.findDriverOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.ACCEPTED) {
       throw new BadRequestException('Only accepted orders can be picked up');
@@ -559,28 +657,18 @@ export class OrdersService {
     });
 
     const { pickupCode, ...safeOrder } = updatedOrder;
+
     return {
       message: 'Order picked up successfully',
       order: safeOrder,
     };
   }
 
-  // Change a picked-up order to out for delivery
+  // Start delivering a picked-up order
   async startDelivery(user: JwtUser, orderId: string) {
-    if (user.role !== Role.DRIVER) {
-      throw new ForbiddenException('Only drivers can start deliveries');
-    }
+    this.ensureDriver(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        driverId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Assigned order not found');
-    }
+    const order = await this.findDriverOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.PICKED_UP) {
       throw new BadRequestException('Only picked-up orders can start delivery');
@@ -603,22 +691,11 @@ export class OrdersService {
     };
   }
 
-  // Complete the delivery and record the collected payment
+  // Complete a successful delivery
   async deliverOrder(user: JwtUser, orderId: string) {
-    if (user.role !== Role.DRIVER) {
-      throw new ForbiddenException('Only drivers can complete deliveries');
-    }
+    this.ensureDriver(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        driverId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Assigned order not found');
-    }
+    const order = await this.findDriverOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.OUT_FOR_DELIVERY) {
       throw new BadRequestException(
@@ -643,22 +720,12 @@ export class OrdersService {
       order: safeOrder,
     };
   }
-  // Record an unsuccessful delivery attempt
+
+  // Record a failed delivery attempt
   async failOrder(user: JwtUser, orderId: string, failOrderDto: FailOrderDto) {
-    if (user.role !== Role.DRIVER) {
-      throw new ForbiddenException('Only drivers can report failed deliveries');
-    }
+    this.ensureDriver(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        driverId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Assigned order not found');
-    }
+    const order = await this.findDriverOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.OUT_FOR_DELIVERY) {
       throw new BadRequestException(
@@ -685,24 +752,11 @@ export class OrdersService {
     };
   }
 
-  // Confirm that the failed order was returned to its shop
+  // Confirm a failed order was returned to the shop
   async confirmReturn(user: JwtUser, orderId: string) {
-    if (user.role !== Role.SHOP_OWNER) {
-      throw new ForbiddenException(
-        'Only shop owners can confirm returned orders',
-      );
-    }
+    this.ensureShopOwner(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        shopOwnerId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Shop order not found');
-    }
+    const order = await this.findOwnedOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.FAILED) {
       throw new BadRequestException(
@@ -725,24 +779,11 @@ export class OrdersService {
     };
   }
 
-  // Confirm that the delivery company paid the shop owner
+  // Confirm payment received by the shop
   async confirmPayment(user: JwtUser, orderId: string) {
-    if (user.role !== Role.SHOP_OWNER) {
-      throw new ForbiddenException(
-        'Only shop owners can confirm received payments',
-      );
-    }
+    this.ensureShopOwner(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        shopOwnerId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Shop order not found');
-    }
+    const order = await this.findOwnedOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.DELIVERED) {
       throw new BadRequestException(
@@ -771,22 +812,11 @@ export class OrdersService {
     };
   }
 
-  // Cancel a pending order owned by the shop
+  // Cancel an order before company acceptance
   async cancelOrder(user: JwtUser, orderId: string) {
-    if (user.role !== Role.SHOP_OWNER) {
-      throw new ForbiddenException('Only shop owners can cancel orders');
-    }
+    this.ensureShopOwner(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: {
-        id: orderId,
-        shopOwnerId: user.id,
-      },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Shop order not found');
-    }
+    const order = await this.findOwnedOrder(user.id, orderId);
 
     if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException('Only pending orders can be cancelled');

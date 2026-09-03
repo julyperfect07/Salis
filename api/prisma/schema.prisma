@@ -41,18 +41,24 @@ enum PaymentStatus {
 }
 
 model User {
-  id               String  @id @default(uuid())
+  id               String   @id @default(uuid())
   name             String
-  email            String  @unique
+  email            String   @unique
   password         String
   role             Role
   phoneNumber      String
   imageUrl         String?
   refreshTokenHash String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   shopOwner       ShopOwner?
   driver          Driver?
   deliveryCompany DeliveryCompany?
+
+  @@index([role])
+  @@index([isActive])
 }
 
 model ShopOwner {
@@ -65,7 +71,7 @@ model ShopOwner {
 
 model DeliveryCompany {
   userId        String         @id
-  deliveryPrice Decimal        @db.Decimal(10, 2)
+  deliveryPrice Decimal        @db.Decimal(10, 3)
   openTime      String
   closeTime     String
   coverageZones DeliveryZone[] @default([])
@@ -82,18 +88,25 @@ model Driver {
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   company DeliveryCompany @relation(fields: [companyId], references: [userId])
   orders  Order[]
+
+  @@index([companyId])
 }
 
 model Product {
   id          String   @id @default(uuid())
   name        String
   description String?
-  price       Decimal  @db.Decimal(10, 2)
+  price       Decimal  @db.Decimal(10, 3)
   imageUrls   String[] @default([])
+  isActive    Boolean  @default(true)
   shopOwnerId String
+  createdAt   DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   shopOwner  ShopOwner   @relation(fields: [shopOwnerId], references: [userId])
   orderItems OrderItem[]
+
+  @@index([shopOwnerId, isActive])
 }
 
 model Order {
@@ -102,26 +115,43 @@ model Order {
   deliveryCompanyId String?
   driverId          String?
 
-  customerName    String
-  customerPhone   String
-  customerAddress String
-  customerNote    String?
+  customerName      String
+  customerPhone     String
+  customerAddress   String
+  customerNote      String?
+  customerLatitude  Decimal? @db.Decimal(9, 6)
+  customerLongitude Decimal? @db.Decimal(9, 6)
 
-  totalPrice Decimal @db.Decimal(10, 2)
+  // Product subtotal before delivery and commissions
+  totalPrice Decimal @db.Decimal(10, 3)
+
+  // Financial values are captured when the order is created
+  deliveryFee               Decimal @default(0) @db.Decimal(10, 3)
+  shopCommission            Decimal @default(0) @db.Decimal(10, 3)
+  deliveryCompanyCommission Decimal @default(0) @db.Decimal(10, 3)
+  customerTotal             Decimal @default(0) @db.Decimal(10, 3)
 
   pickupCode     String  @unique
   pickupCodeUsed Boolean @default(false)
 
-  deliveryZone DeliveryZone?
-
+  deliveryZone  DeliveryZone?
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
   returnReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   shopOwner       ShopOwner        @relation(fields: [shopOwnerId], references: [userId])
   deliveryCompany DeliveryCompany? @relation(fields: [deliveryCompanyId], references: [userId])
   driver          Driver?          @relation(fields: [driverId], references: [userId])
   orderItems      OrderItem[]
+
+  @@index([shopOwnerId, status])
+  @@index([deliveryCompanyId, status])
+  @@index([driverId, status])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -132,4 +162,7 @@ model OrderItem {
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
