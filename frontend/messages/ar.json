@@ -1,4 +1,323 @@
 {
+  "AdminDashboard": {
+    "page": {
+      "title": "لوحة التحكم",
+      "description": "راقب المستخدمين والطلبات والمنتجات والبيانات المالية."
+    },
+    "cards": {
+      "platformRevenue": "إيرادات المنصة",
+      "platformRevenueDetail": "العمولات التي حققتها سلس",
+      "totalOrders": "إجمالي الطلبات",
+      "deliveredCount": "تم توصيل {count} طلب بنجاح",
+      "totalUsers": "إجمالي المستخدمين",
+      "activeUsers": "{count} حساب نشط",
+      "activeProducts": "المنتجات النشطة",
+      "totalProducts": "{count} منتجاً إجمالاً",
+      "customerPayments": "مدفوعات العملاء",
+      "customerPaymentsDetail": "إجمالي المبالغ المطلوبة من العملاء",
+      "deliveryFees": "رسوم التوصيل",
+      "deliveryFeesDetail": "رسوم التوصيل المسجلة في المنصة",
+      "unpaidToShops": "المبالغ المستحقة للمتاجر",
+      "unpaidToShopsDetail": "مدفوعات ما زالت بانتظار التسوية"
+    },
+    "chart": {
+      "title": "نشاط الطلبات",
+      "description": "توزيع الطلبات الحالي حسب الحالة",
+      "orders": "الطلبات",
+      "orderCount": "{count} طلب"
+    },
+    "distribution": {
+      "title": "توزيع المستخدمين",
+      "description": "الحسابات موزعة حسب المسؤولية"
+    },
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "accepted": "مقبول",
+      "pickedUp": "تم الاستلام",
+      "outForDelivery": "قيد التوصيل",
+      "delivered": "تم التوصيل",
+      "failed": "فشل",
+      "returned": "مرتجع",
+      "cancelled": "ملغي"
+    },
+    "roles": {
+      "shopOwners": "أصحاب المتاجر",
+      "deliveryCompanies": "شركات التوصيل",
+      "drivers": "السائقون",
+      "admins": "المسؤولون"
+    },
+    "error": {
+      "title": "تعذر تحميل لوحة التحكم",
+      "description": "تأكد من تشغيل واجهة API ثم حاول مرة أخرى."
+    },
+    "actions": {
+      "retry": "إعادة المحاولة"
+    }
+  },
+  "DashboardShell": {
+    "brand": "سلس",
+    "brandSubtitle": "إدارة عمليات التوصيل",
+    "welcome": "مرحباً بعودتك،",
+    "userFallback": "المستخدم",
+    "navigation": {
+      "dashboard": "لوحة التحكم",
+      "users": "المستخدمون",
+      "orders": "الطلبات",
+      "products": "المنتجات",
+      "drivers": "السائقون",
+      "myOrders": "طلباتي",
+      "profile": "الملف الشخصي"
+    },
+    "actions": {
+      "search": "بحث",
+      "notifications": "الإشعارات",
+      "logout": "تسجيل الخروج",
+      "accountMenu": "فتح قائمة الحساب"
+    }
+  },
+  "AdminUsers": {
+    "page": {
+      "title": "المستخدمون",
+      "description": "إدارة حسابات المنصة وصلاحيات الوصول."
+    },
+    "create": {
+      "trigger": "إنشاء حساب",
+      "title": "إنشاء حساب",
+      "description": "أنشئ حساب صاحب متجر أو شركة توصيل أو مسؤول."
+    },
+    "edit": {
+      "trigger": "تعديل الحساب",
+      "title": "تعديل الحساب",
+      "description": "حدّث المعلومات الأساسية للحساب.",
+      "save": "حفظ التعديلات"
+    },
+    "resetPassword": {
+      "trigger": "إعادة تعيين كلمة المرور",
+      "title": "إعادة تعيين كلمة المرور",
+      "description": "عيّن كلمة مرور جديدة للمستخدم {name}. ستتوقف كلمة المرور الحالية عن العمل فوراً.",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "submit": "إعادة تعيين كلمة المرور"
+    },
+    "statusDialog": {
+      "activate": "تفعيل",
+      "deactivate": "تعطيل",
+      "activateTitle": "تفعيل هذا الحساب؟",
+      "deactivateTitle": "تعطيل هذا الحساب؟",
+      "activateDescription": "سيتمكن {name} من تسجيل الدخول واستخدام المنصة مجدداً.",
+      "deactivateDescription": "لن يتمكن {name} من تسجيل الدخول أو استخدام المنصة."
+    },
+    "list": {
+      "title": "مستخدمو المنصة",
+      "description": "ابحث عن الحسابات وراجعها وقم بإدارتها.",
+      "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني...",
+      "allRoles": "جميع الأدوار",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "emptyTitle": "لم يتم العثور على مستخدمين",
+      "emptyDescription": "جرّب تغيير البحث أو الدور المحدد.",
+      "errorTitle": "تعذر تحميل المستخدمين",
+      "errorDescription": "تحقق من اتصال API ثم حاول مرة أخرى.",
+      "showing": "عرض {shown} من أصل {total} مستخدم",
+      "columns": {
+        "user": "المستخدم",
+        "role": "الدور",
+        "phone": "رقم الهاتف",
+        "status": "الحالة",
+        "created": "تاريخ الإنشاء",
+        "actions": "الإجراءات"
+      }
+    },
+    "details": {
+      "pageTitle": "تفاصيل المستخدم",
+      "pageDescription": "راجع معلومات الحساب ونشاطه وصلاحيات الوصول.",
+      "back": "العودة إلى المستخدمين",
+      "errorTitle": "تعذر تحميل المستخدم",
+      "errorDescription": "قد يكون الحساب غير موجود أو لا يمكن الوصول إليه.",
+      "accountInformation": "معلومات الحساب",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "role": "دور الحساب",
+      "createdAt": "تاريخ إنشاء الحساب",
+      "deliveryCompanyInformation": "معلومات شركة التوصيل",
+      "deliveryPrice": "سعر التوصيل",
+      "currency": "دينار",
+      "workingHours": "ساعات العمل",
+      "drivers": "السائقون",
+      "orders": "الطلبات",
+      "coverageZones": "مناطق التغطية",
+      "noCoverageZones": "لا توجد مناطق تغطية",
+      "driverInformation": "معلومات السائق",
+      "deliveryCompany": "شركة التوصيل",
+      "assignedOrders": "الطلبات المسندة",
+      "shopInformation": "معلومات المتجر",
+      "products": "المنتجات"
+    },
+    "fields": {
+      "role": "دور الحساب",
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "password": "كلمة المرور",
+      "companyId": "معرّف شركة التوصيل",
+      "deliveryPrice": "سعر التوصيل",
+      "openTime": "وقت بدء العمل",
+      "closeTime": "وقت انتهاء العمل",
+      "coverageZones": "مناطق التغطية"
+    },
+    "placeholders": {
+      "name": "اسم الحساب",
+      "email": "account@example.com",
+      "phone": "0790000000",
+      "password": "8 أحرف على الأقل",
+      "companyId": "معرّف الشركة UUID"
+    },
+    "roles": {
+      "SHOP_OWNER": "صاحب متجر",
+      "DELIVERY_COMPANY": "شركة توصيل",
+      "DRIVER": "سائق",
+      "ADMIN": "مسؤول"
+    },
+    "zones": {
+      "AMMAN_CENTRAL": "وسط عمّان",
+      "AMMAN_WEST": "غرب عمّان",
+      "AMMAN_EAST": "شرق عمّان",
+      "AMMAN_NORTH": "شمال عمّان",
+      "AMMAN_SOUTH": "جنوب عمّان"
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "create": "إنشاء الحساب",
+      "view": "عرض",
+      "retry": "إعادة المحاولة",
+      "previous": "الصفحة السابقة",
+      "next": "الصفحة التالية"
+    },
+    "validation": {
+      "name": "يجب أن يحتوي الاسم على حرفين على الأقل",
+      "email": "أدخل بريداً إلكترونياً صالحاً",
+      "password": "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل",
+      "confirmPassword": "يرجى تأكيد كلمة المرور",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين",
+      "phone": "أدخل رقم هاتف صالحاً",
+      "companyId": "أدخل معرّف شركة توصيل صالحاً",
+      "deliveryPrice": "أدخل سعر توصيل صالحاً",
+      "openTime": "وقت بدء العمل مطلوب",
+      "closeTime": "وقت انتهاء العمل مطلوب",
+      "coverageZones": "اختر منطقة تغطية واحدة على الأقل"
+    }
+  },
+  "AdminOrders": {
+    "page": {
+      "title": "الطلبات",
+      "description": "راجع جميع طلبات المنصة ومراحل تنفيذها وحالة الدفع."
+    },
+    "list": {
+      "title": "طلبات المنصة",
+      "description": "ابحث وصفِّ الطلبات من جميع المتاجر وشركات التوصيل."
+    },
+    "filters": {
+      "search": "ابحث بالطلب أو العميل أو الهاتف...",
+      "allStatuses": "جميع الحالات",
+      "allPayments": "جميع حالات الدفع",
+      "fromDate": "من تاريخ",
+      "toDate": "إلى تاريخ"
+    },
+    "columns": {
+      "order": "الطلب",
+      "customer": "العميل",
+      "shop": "المتجر",
+      "status": "الحالة",
+      "payment": "الدفع",
+      "total": "إجمالي العميل",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "statuses": {
+      "PENDING": "قيد الانتظار",
+      "ACCEPTED": "مقبول",
+      "PICKED_UP": "تم الاستلام",
+      "OUT_FOR_DELIVERY": "قيد التوصيل",
+      "DELIVERED": "تم التوصيل",
+      "FAILED": "فشل",
+      "RETURNED": "مرتجع",
+      "CANCELLED": "ملغي"
+    },
+    "payments": {
+      "PENDING": "قيد الانتظار",
+      "COLLECTED": "تم التحصيل",
+      "PAID_TO_SHOP": "تم الدفع للمتجر",
+      "NOT_COLLECTED": "لم يتم التحصيل"
+    },
+    "zones": {
+      "AMMAN_CENTRAL": "وسط عمّان",
+      "AMMAN_WEST": "غرب عمّان",
+      "AMMAN_EAST": "شرق عمّان",
+      "AMMAN_NORTH": "شمال عمّان",
+      "AMMAN_SOUTH": "جنوب عمّان"
+    },
+    "details": {
+      "pageTitle": "تفاصيل الطلب",
+      "pageDescription": "راجع بيانات الطلب والتنفيذ والسجل المالي بالكامل.",
+      "back": "العودة إلى الطلبات",
+      "errorTitle": "تعذر تحميل هذا الطلب",
+      "errorDescription": "قد يكون الطلب غير موجود أو لا يمكن الوصول إليه.",
+      "customer": "العميل",
+      "phone": "رقم الهاتف",
+      "address": "عنوان التوصيل",
+      "zone": "منطقة التوصيل",
+      "fulfillment": "بيانات التنفيذ",
+      "shop": "المتجر",
+      "company": "شركة التوصيل",
+      "driver": "السائق",
+      "note": "ملاحظة العميل",
+      "notAssigned": "غير معيّن",
+      "none": "لا يوجد",
+      "financials": "البيانات المالية",
+      "productsTotal": "إجمالي المنتجات",
+      "deliveryFee": "رسوم التوصيل",
+      "shopCommission": "عمولة المتجر",
+      "customerTotal": "إجمالي العميل",
+      "items": "منتجات الطلب",
+      "quantity": "الكمية: {count}"
+    },
+    "items": "منتجات",
+    "showing": "عرض {shown} من أصل {total} طلب",
+    "empty": {
+      "title": "لا توجد طلبات",
+      "description": "جرّب تغيير البحث أو عوامل التصفية المحددة."
+    },
+    "error": {
+      "title": "تعذر تحميل الطلبات",
+      "description": "تحقق من اتصال واجهة API ثم حاول مرة أخرى."
+    },
+    "actions": {
+      "retry": "إعادة المحاولة",
+      "view": "عرض",
+      "previous": "الصفحة السابقة",
+      "next": "الصفحة التالية"
+    }
+  },
+  "ShopOwner": {
+    "dashboard": { "pageTitle": "لوحة المتجر", "pageDescription": "أدر المنتجات وتابع طلبات العملاء.", "activeProducts": "المنتجات النشطة", "totalOrders": "إجمالي الطلبات", "netSales": "صافي المبيعات المسلّمة", "recentOrders": "أحدث الطلبات", "recentOrdersDescription": "آخر خمسة طلبات تم إنشاؤها" },
+    "products": { "pageTitle": "المنتجات", "pageDescription": "أنشئ منتجات متجرك وحدّثها وأرشفها واستعدها.", "create": "إضافة منتج", "edit": "تعديل المنتج", "formDescription": "أدخل تفاصيل المنتج وارفع حتى خمس صور.", "name": "اسم المنتج", "description": "الوصف", "price": "السعر (دينار)", "images": "صور المنتج", "uploadImages": "اختيار الصور", "removeImage": "إزالة الصورة", "search": "البحث في المنتجات...", "active": "المنتجات النشطة", "archived": "المنتجات المؤرشفة", "archive": "أرشفة", "restore": "استعادة", "archiveConfirm": "هل تريد أرشفة هذا المنتج؟ لن يكون متاحاً للطلبات الجديدة.", "sortNewest": "الأحدث أولاً", "sortName": "الاسم", "sortPrice": "السعر الأعلى", "showing": "عرض {shown} من أصل {total} منتج", "empty": "لا توجد منتجات", "error": "تعذر تحميل المنتجات", "noDescription": "لا يوجد وصف", "messages": { "created": "تم إنشاء المنتج بنجاح", "updated": "تم تحديث المنتج بنجاح", "archived": "تمت أرشفة المنتج", "restored": "تمت استعادة المنتج", "saveError": "تعذر حفظ المنتج", "imagesUploaded": "تم رفع الصور بنجاح", "uploadError": "تعذر رفع الصور", "imageInvalid": "استخدم حتى خمس صور JPEG أو PNG أو WebP، بحجم أقصى 5 ميجابايت لكل صورة" } },
+    "orders": { "pageTitle": "الطلبات", "pageDescription": "أنشئ طلبات العملاء وتابعها.", "search": "ابحث بالطلب أو العميل أو الهاتف...", "allStatuses": "جميع الحالات", "allPayments": "جميع حالات الدفع", "fromDate": "من تاريخ", "toDate": "إلى تاريخ", "showing": "عرض {shown} من أصل {total} طلب", "new": "طلب جديد", "empty": "لا توجد طلبات", "error": "تعذر تحميل الطلبات", "create": { "pageTitle": "إنشاء طلب", "pageDescription": "أضف بيانات العميل وحدد موقع التوصيل واختر المنتجات.", "customer": "معلومات العميل", "name": "اسم العميل", "phone": "رقم الهاتف", "address": "عنوان التوصيل", "note": "ملاحظة العميل (اختياري)", "location": "موقع العميل", "mapHint": "اختر منطقة التوصيل ثم انقر على الخريطة لتثبيت الموقع.", "useLocation": "استخدام موقعي", "locationSelected": "تم تحديد الموقع", "products": "المنتجات", "subtotal": "إجمالي المنتجات", "submit": "إنشاء الطلب وتعيينه", "messages": { "productsRequired": "أضف منتجاً واحداً على الأقل", "locationRequired": "حدد موقع العميل على الخريطة", "locationUnavailable": "تعذر تحديد موقعك الحالي", "created": "تم إنشاء الطلب وتعيينه بنجاح", "error": "تعذر إنشاء الطلب. تحقق من وجود شركة توصيل تغطي المنطقة." } }, "details": { "pageTitle": "تفاصيل الطلب", "pageDescription": "راجع التنفيذ والدفع والمنتجات ومعلومات الاستلام.", "back": "العودة إلى الطلبات", "error": "تعذر تحميل هذا الطلب", "cancel": "إلغاء الطلب", "cancelled": "تم إلغاء الطلب", "cancelError": "تعذر إلغاء الطلب", "address": "العنوان", "zone": "منطقة التوصيل", "company": "شركة التوصيل", "driver": "السائق", "subtotal": "إجمالي المنتجات", "delivery": "رسوم التوصيل", "total": "إجمالي العميل", "pickup": "رمز الاستلام", "items": "منتجات الطلب", "openMap": "فتح موقع العميل على الخريطة" } },
+    "payments": { "PENDING": "قيد الانتظار", "COLLECTED": "تم التحصيل", "PAID_TO_SHOP": "تم الدفع للمتجر", "NOT_COLLECTED": "لم يتم التحصيل" },
+    "statuses": { "PENDING": "قيد الانتظار", "ACCEPTED": "مقبول", "PICKED_UP": "تم الاستلام", "OUT_FOR_DELIVERY": "قيد التوصيل", "DELIVERED": "تم التوصيل", "FAILED": "فشل", "RETURNED": "مرتجع", "CANCELLED": "ملغي" },
+    "zones": { "AMMAN_CENTRAL": "وسط عمّان", "AMMAN_WEST": "غرب عمّان", "AMMAN_EAST": "شرق عمّان", "AMMAN_NORTH": "شمال عمّان", "AMMAN_SOUTH": "جنوب عمّان" },
+    "actions": { "save": "حفظ", "cancel": "إلغاء", "retry": "إعادة المحاولة" }
+  },
+  "Profile": {
+    "page": { "title": "الملف الشخصي", "description": "أدر حسابك وأمانه والإعدادات الخاصة بدورك." },
+    "account": { "title": "معلومات الحساب", "name": "الاسم", "phone": "رقم الهاتف", "uploadAvatar": "رفع صورة الملف الشخصي", "avatarHint": "JPEG أو PNG أو WebP · بحد أقصى 2 ميجابايت" },
+    "password": { "title": "تغيير كلمة المرور", "current": "كلمة المرور الحالية", "new": "كلمة المرور الجديدة", "confirm": "تأكيد كلمة المرور الجديدة" },
+    "delivery": { "title": "إعدادات شركة التوصيل", "price": "سعر التوصيل (دينار)", "open": "وقت بدء العمل", "close": "وقت انتهاء العمل", "zones": "مناطق التغطية" },
+    "roles": { "ADMIN": "مسؤول", "SHOP_OWNER": "صاحب متجر", "DELIVERY_COMPANY": "شركة توصيل", "DRIVER": "سائق" },
+    "zones": { "AMMAN_CENTRAL": "وسط عمّان", "AMMAN_WEST": "غرب عمّان", "AMMAN_EAST": "شرق عمّان", "AMMAN_NORTH": "شمال عمّان", "AMMAN_SOUTH": "جنوب عمّان" },
+    "actions": { "save": "حفظ الملف الشخصي", "changePassword": "تغيير كلمة المرور", "saveDelivery": "حفظ إعدادات الشركة", "retry": "إعادة المحاولة" },
+    "messages": { "profileSaved": "تم حفظ الملف الشخصي بنجاح", "profileError": "تعذر حفظ الملف الشخصي", "avatarSaved": "تم تحديث صورة الملف الشخصي بنجاح", "avatarError": "تعذر رفع صورة الملف الشخصي", "avatarType": "اختر صورة بصيغة JPEG أو PNG أو WebP", "avatarSize": "يجب ألا يتجاوز حجم الصورة 2 ميجابايت", "passwordSaved": "تم تغيير كلمة المرور بنجاح", "passwordError": "تعذر تغيير كلمة المرور", "passwordMismatch": "كلمتا المرور غير متطابقتين", "deliverySaved": "تم حفظ إعدادات الشركة بنجاح", "deliveryError": "تعذر حفظ إعدادات الشركة" },
+    "error": { "title": "تعذر تحميل ملفك الشخصي", "description": "تحقق من اتصال واجهة API ثم حاول مرة أخرى." }
+  },
   "Common": {
     "appName": "سلس",
     "login": "تسجيل الدخول",
@@ -58,7 +377,7 @@
     "shopOwnerFeatureTwo": "إنشاء الطلب باستخدام السلة",
     "shopOwnerFeatureThree": "الدفعات والمرتجعات",
     "deliveryCompany": "شركة التوصيل",
-    "deliveryCompanyDescription": "راجع الطلبات المعينة وأدر السائقين ومناطق التغطية وسدد دفعات المتاجر.",
+    "deliveryCompanyDescription": "راجع الطلبات المعينة وأنشئ السائقين وأدرهم وتحكم بمناطق التغطية وسدد دفعات المتاجر.",
     "companyFeatureOne": "التعيين التلقائي للطلبات",
     "companyFeatureTwo": "إدارة السائقين",
     "companyFeatureThree": "متابعة التوصيل والدفعات",
@@ -76,7 +395,7 @@
     "faqTitle": "لديك سؤال عن سلس؟",
     "faqDescription": "إليك أهم المعلومات التي تحتاج إلى معرفتها قبل استخدام المنصة.",
     "faqAccountQuestion": "هل يمكن لأي شخص إنشاء حساب في سلس؟",
-    "faqAccountAnswer": "لا. يتم إنشاء الحسابات من قبل مسؤول المنصة لأصحاب المتاجر وشركات التوصيل والسائقين المعتمدين.",
+    "faqAccountAnswer": "لا. ينشئ مسؤول المنصة حسابات أصحاب المتاجر وشركات التوصيل، وتنشئ كل شركة توصيل سائقيها وتديرهم.",
     "faqAssignmentQuestion": "كيف يتم اختيار شركة التوصيل؟",
     "faqAssignmentAnswer": "تختار سلس شركة متاحة تلقائياً حسب منطقة توصيل العميل وسعر التوصيل لدى الشركة.",
     "faqPickupQuestion": "كيف يعمل رمز الاستلام؟",
@@ -94,7 +413,7 @@
     "hidePassword": "إخفاء كلمة المرور",
     "loggingIn": "جارٍ تسجيل الدخول...",
     "success": "تم تسجيل الدخول بنجاح",
-    "adminNotice": "يتم إنشاء الحسابات وإدارتها من قبل مسؤول منصة سلس."
+    "adminNotice": "ينشئ مسؤول منصة سلس حسابات أصحاب المتاجر وشركات التوصيل."
   },
   "Footer": {
     "eyebrow": "جاهز لتبسيط كل عملية توصيل؟",

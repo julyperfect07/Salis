@@ -12,8 +12,10 @@ export async function login(credentials: LoginCredentials) {
 }
 
 export async function getCurrentUser() {
-  const response = await api.get<AuthUser>("/auth/me");
-  return response.data;
+  const response = await api.get<{ message: string; user: AuthUser }>(
+    "/users/me",
+  );
+  return response.data.user;
 }
 
 export async function logout() {

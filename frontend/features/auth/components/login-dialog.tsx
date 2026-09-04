@@ -29,8 +29,8 @@ import { loginSchema, type LoginFormValues } from "../login-schema";
 
 const dashboardRoutes: Record<UserRole, string> = {
   ADMIN: "/admin",
-  SHOP_OWNER: "/shop",
-  DELIVERY_COMPANY: "/company",
+  SHOP_OWNER: "/shop-owner",
+  DELIVERY_COMPANY: "/delivery-company",
   DRIVER: "/driver",
 };
 

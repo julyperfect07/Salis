@@ -1,0 +1,2 @@
+import { getTranslations } from "next-intl/server"; import { DashboardShell } from "@/components/layout/dashboard-shell"; import { ShopOrderDetails } from "@/features/shop-owner/components/shop-order-details";
+export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) { const { id } = await params; const t = await getTranslations("ShopOwner"); return <DashboardShell title={t("orders.details.pageTitle")} description={t("orders.details.pageDescription")}><div className="mx-auto max-w-5xl"><ShopOrderDetails orderId={id} /></div></DashboardShell>; }

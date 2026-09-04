@@ -1,4 +1,323 @@
 {
+  "AdminDashboard": {
+    "page": {
+      "title": "Dashboard",
+      "description": "Monitor users, orders, products, and platform finances."
+    },
+    "cards": {
+      "platformRevenue": "Platform revenue",
+      "platformRevenueDetail": "Commission earned by Salis",
+      "totalOrders": "Total orders",
+      "deliveredCount": "{count} successfully delivered",
+      "totalUsers": "Total users",
+      "activeUsers": "{count} active accounts",
+      "activeProducts": "Active products",
+      "totalProducts": "{count} products in total",
+      "customerPayments": "Customer payments",
+      "customerPaymentsDetail": "Total amount charged to customers",
+      "deliveryFees": "Delivery fees",
+      "deliveryFeesDetail": "Delivery fees recorded by the platform",
+      "unpaidToShops": "Unpaid to shops",
+      "unpaidToShopsDetail": "Payments still awaiting settlement"
+    },
+    "chart": {
+      "title": "Order activity",
+      "description": "Current order distribution by status",
+      "orders": "Orders",
+      "orderCount": "{count} orders"
+    },
+    "distribution": {
+      "title": "User distribution",
+      "description": "Accounts grouped by responsibility"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "pickedUp": "Picked up",
+      "outForDelivery": "Out for delivery",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "returned": "Returned",
+      "cancelled": "Cancelled"
+    },
+    "roles": {
+      "shopOwners": "Shop owners",
+      "deliveryCompanies": "Delivery companies",
+      "drivers": "Drivers",
+      "admins": "Administrators"
+    },
+    "error": {
+      "title": "Could not load the dashboard",
+      "description": "Check that the API is running and try again."
+    },
+    "actions": {
+      "retry": "Try again"
+    }
+  },
+  "DashboardShell": {
+    "brand": "Salis",
+    "brandSubtitle": "Delivery management",
+    "welcome": "Welcome back,",
+    "userFallback": "User",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "orders": "Orders",
+      "products": "Products",
+      "drivers": "Drivers",
+      "myOrders": "My orders",
+      "profile": "Profile"
+    },
+    "actions": {
+      "search": "Search",
+      "notifications": "Notifications",
+      "logout": "Log out",
+      "accountMenu": "Open account menu"
+    }
+  },
+  "AdminUsers": {
+    "page": {
+      "title": "Users",
+      "description": "Manage platform accounts and access."
+    },
+    "create": {
+      "trigger": "Create account",
+      "title": "Create account",
+      "description": "Create a shop owner, delivery company, or administrator account."
+    },
+    "edit": {
+      "trigger": "Edit account",
+      "title": "Edit account",
+      "description": "Update the account's basic information.",
+      "save": "Save changes"
+    },
+    "resetPassword": {
+      "trigger": "Reset password",
+      "title": "Reset password",
+      "description": "Set a new password for {name}. Their current password will stop working immediately.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Reset password"
+    },
+    "statusDialog": {
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "activateTitle": "Activate this account?",
+      "deactivateTitle": "Deactivate this account?",
+      "activateDescription": "{name} will be allowed to log in and use the platform again.",
+      "deactivateDescription": "{name} will no longer be able to log in or use the platform."
+    },
+    "list": {
+      "title": "Platform users",
+      "description": "Search, review, and manage every account.",
+      "searchPlaceholder": "Search name or email...",
+      "allRoles": "All roles",
+      "active": "Active",
+      "inactive": "Inactive",
+      "emptyTitle": "No users found",
+      "emptyDescription": "Try changing your search or selected role.",
+      "errorTitle": "Could not retrieve users",
+      "errorDescription": "Check the API connection and try again.",
+      "showing": "Showing {shown} of {total} users",
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "phone": "Phone number",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      }
+    },
+    "details": {
+      "pageTitle": "User details",
+      "pageDescription": "Review account information, activity, and access.",
+      "back": "Back to users",
+      "errorTitle": "Could not retrieve this user",
+      "errorDescription": "The account may not exist or cannot be accessed.",
+      "accountInformation": "Account information",
+      "email": "Email address",
+      "phone": "Phone number",
+      "role": "Account role",
+      "createdAt": "Account created",
+      "deliveryCompanyInformation": "Delivery company information",
+      "deliveryPrice": "Delivery price",
+      "currency": "JOD",
+      "workingHours": "Working hours",
+      "drivers": "Drivers",
+      "orders": "Orders",
+      "coverageZones": "Coverage zones",
+      "noCoverageZones": "No coverage zones",
+      "driverInformation": "Driver information",
+      "deliveryCompany": "Delivery company",
+      "assignedOrders": "Assigned orders",
+      "shopInformation": "Shop information",
+      "products": "Products"
+    },
+    "fields": {
+      "role": "Account role",
+      "name": "Name",
+      "email": "Email address",
+      "phone": "Phone number",
+      "password": "Password",
+      "companyId": "Delivery company ID",
+      "deliveryPrice": "Delivery price",
+      "openTime": "Opens at",
+      "closeTime": "Closes at",
+      "coverageZones": "Coverage zones"
+    },
+    "placeholders": {
+      "name": "Account name",
+      "email": "account@example.com",
+      "phone": "0790000000",
+      "password": "At least 8 characters",
+      "companyId": "Company UUID"
+    },
+    "roles": {
+      "SHOP_OWNER": "Shop owner",
+      "DELIVERY_COMPANY": "Delivery company",
+      "DRIVER": "Driver",
+      "ADMIN": "Administrator"
+    },
+    "zones": {
+      "AMMAN_CENTRAL": "Amman Central",
+      "AMMAN_WEST": "Amman West",
+      "AMMAN_EAST": "Amman East",
+      "AMMAN_NORTH": "Amman North",
+      "AMMAN_SOUTH": "Amman South"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "create": "Create account",
+      "view": "View",
+      "retry": "Try again",
+      "previous": "Previous page",
+      "next": "Next page"
+    },
+    "validation": {
+      "name": "Name must contain at least 2 characters",
+      "email": "Enter a valid email address",
+      "password": "Password must contain at least 8 characters",
+      "confirmPassword": "Please confirm the password",
+      "passwordMismatch": "Passwords do not match",
+      "phone": "Enter a valid phone number",
+      "companyId": "Enter a valid delivery company UUID",
+      "deliveryPrice": "Enter a valid delivery price",
+      "openTime": "Opening time is required",
+      "closeTime": "Closing time is required",
+      "coverageZones": "Select at least one coverage zone"
+    }
+  },
+  "AdminOrders": {
+    "page": {
+      "title": "Orders",
+      "description": "Review every platform order, its progress, and payment state."
+    },
+    "list": {
+      "title": "Platform orders",
+      "description": "Search and filter orders across all shops and delivery companies."
+    },
+    "filters": {
+      "search": "Search order, customer, or phone...",
+      "allStatuses": "All statuses",
+      "allPayments": "All payments",
+      "fromDate": "From date",
+      "toDate": "To date"
+    },
+    "columns": {
+      "order": "Order",
+      "customer": "Customer",
+      "shop": "Shop",
+      "status": "Status",
+      "payment": "Payment",
+      "total": "Customer total",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "ACCEPTED": "Accepted",
+      "PICKED_UP": "Picked up",
+      "OUT_FOR_DELIVERY": "Out for delivery",
+      "DELIVERED": "Delivered",
+      "FAILED": "Failed",
+      "RETURNED": "Returned",
+      "CANCELLED": "Cancelled"
+    },
+    "payments": {
+      "PENDING": "Pending",
+      "COLLECTED": "Collected",
+      "PAID_TO_SHOP": "Paid to shop",
+      "NOT_COLLECTED": "Not collected"
+    },
+    "zones": {
+      "AMMAN_CENTRAL": "Amman Central",
+      "AMMAN_WEST": "Amman West",
+      "AMMAN_EAST": "Amman East",
+      "AMMAN_NORTH": "Amman North",
+      "AMMAN_SOUTH": "Amman South"
+    },
+    "details": {
+      "pageTitle": "Order details",
+      "pageDescription": "Review the complete order, fulfillment, and financial record.",
+      "back": "Back to orders",
+      "errorTitle": "Could not retrieve this order",
+      "errorDescription": "The order may not exist or cannot be accessed.",
+      "customer": "Customer",
+      "phone": "Phone number",
+      "address": "Delivery address",
+      "zone": "Delivery zone",
+      "fulfillment": "Fulfillment",
+      "shop": "Shop",
+      "company": "Delivery company",
+      "driver": "Driver",
+      "note": "Customer note",
+      "notAssigned": "Not assigned",
+      "none": "None",
+      "financials": "Financials",
+      "productsTotal": "Products total",
+      "deliveryFee": "Delivery fee",
+      "shopCommission": "Shop commission",
+      "customerTotal": "Customer total",
+      "items": "Order items",
+      "quantity": "Quantity: {count}"
+    },
+    "items": "items",
+    "showing": "Showing {shown} of {total} orders",
+    "empty": {
+      "title": "No orders found",
+      "description": "Try changing the search or selected filters."
+    },
+    "error": {
+      "title": "Could not retrieve orders",
+      "description": "Check the API connection and try again."
+    },
+    "actions": {
+      "retry": "Try again",
+      "view": "View",
+      "previous": "Previous page",
+      "next": "Next page"
+    }
+  },
+  "ShopOwner": {
+    "dashboard": { "pageTitle": "Shop dashboard", "pageDescription": "Manage products and follow customer orders.", "activeProducts": "Active products", "totalOrders": "Total orders", "netSales": "Net delivered sales", "recentOrders": "Recent orders", "recentOrdersDescription": "Your five most recently created orders" },
+    "products": { "pageTitle": "Products", "pageDescription": "Create, update, archive, and restore your catalog.", "create": "Add product", "edit": "Edit product", "formDescription": "Enter the product details and upload up to five images.", "name": "Product name", "description": "Description", "price": "Price (JOD)", "images": "Product images", "uploadImages": "Choose images", "removeImage": "Remove image", "search": "Search products...", "active": "Active products", "archived": "Archived products", "archive": "Archive", "restore": "Restore", "archiveConfirm": "Archive this product? It will no longer be available for new orders.", "sortNewest": "Newest first", "sortName": "Name", "sortPrice": "Highest price", "showing": "Showing {shown} of {total} products", "empty": "No products found", "error": "Could not retrieve products", "noDescription": "No description", "messages": { "created": "Product created successfully", "updated": "Product updated successfully", "archived": "Product archived", "restored": "Product restored", "saveError": "Could not save the product", "imagesUploaded": "Images uploaded successfully", "uploadError": "Could not upload images", "imageInvalid": "Use up to five JPEG, PNG, or WebP images, each no larger than 5 MB" } },
+    "orders": { "pageTitle": "Orders", "pageDescription": "Create and track your customer orders.", "search": "Search order, customer, or phone...", "allStatuses": "All statuses", "allPayments": "All payments", "fromDate": "From date", "toDate": "To date", "showing": "Showing {shown} of {total} orders", "new": "New order", "empty": "No orders found", "error": "Could not retrieve orders", "create": { "pageTitle": "Create order", "pageDescription": "Add customer details, pin the delivery location, and select products.", "customer": "Customer information", "name": "Customer name", "phone": "Phone number", "address": "Delivery address", "note": "Customer note (optional)", "location": "Customer location", "mapHint": "Choose the delivery zone, then click the map to place the pin.", "useLocation": "Use my location", "locationSelected": "Location selected", "products": "Products", "subtotal": "Products subtotal", "submit": "Create and assign order", "messages": { "productsRequired": "Add at least one product", "locationRequired": "Pin the customer location on the map", "locationUnavailable": "Your current location could not be determined", "created": "Order created and assigned successfully", "error": "Could not create the order. Check that a delivery company covers this zone." } }, "details": { "pageTitle": "Order details", "pageDescription": "Review fulfillment, payment, products, and pickup information.", "back": "Back to orders", "error": "Could not retrieve this order", "cancel": "Cancel order", "cancelled": "Order cancelled", "cancelError": "Could not cancel the order", "address": "Address", "zone": "Delivery zone", "company": "Delivery company", "driver": "Driver", "subtotal": "Products total", "delivery": "Delivery fee", "total": "Customer total", "pickup": "Pickup code", "items": "Order items", "openMap": "Open customer location in map" } },
+    "payments": { "PENDING": "Pending", "COLLECTED": "Collected", "PAID_TO_SHOP": "Paid to shop", "NOT_COLLECTED": "Not collected" },
+    "statuses": { "PENDING": "Pending", "ACCEPTED": "Accepted", "PICKED_UP": "Picked up", "OUT_FOR_DELIVERY": "Out for delivery", "DELIVERED": "Delivered", "FAILED": "Failed", "RETURNED": "Returned", "CANCELLED": "Cancelled" },
+    "zones": { "AMMAN_CENTRAL": "Amman Central", "AMMAN_WEST": "Amman West", "AMMAN_EAST": "Amman East", "AMMAN_NORTH": "Amman North", "AMMAN_SOUTH": "Amman South" },
+    "actions": { "save": "Save", "cancel": "Cancel", "retry": "Try again" }
+  },
+  "Profile": {
+    "page": { "title": "Profile", "description": "Manage your account, security, and role-specific settings." },
+    "account": { "title": "Account information", "name": "Name", "phone": "Phone number", "uploadAvatar": "Upload profile image", "avatarHint": "JPEG, PNG, or WebP · up to 2 MB" },
+    "password": { "title": "Change password", "current": "Current password", "new": "New password", "confirm": "Confirm new password" },
+    "delivery": { "title": "Delivery company settings", "price": "Delivery price (JOD)", "open": "Opening time", "close": "Closing time", "zones": "Coverage zones" },
+    "roles": { "ADMIN": "Administrator", "SHOP_OWNER": "Shop owner", "DELIVERY_COMPANY": "Delivery company", "DRIVER": "Driver" },
+    "zones": { "AMMAN_CENTRAL": "Amman Central", "AMMAN_WEST": "Amman West", "AMMAN_EAST": "Amman East", "AMMAN_NORTH": "Amman North", "AMMAN_SOUTH": "Amman South" },
+    "actions": { "save": "Save profile", "changePassword": "Change password", "saveDelivery": "Save company settings", "retry": "Try again" },
+    "messages": { "profileSaved": "Profile saved successfully", "profileError": "Could not save the profile", "avatarSaved": "Profile image updated successfully", "avatarError": "Could not upload the profile image", "avatarType": "Choose a JPEG, PNG, or WebP image", "avatarSize": "The image must be 2 MB or smaller", "passwordSaved": "Password changed successfully", "passwordError": "Could not change the password", "passwordMismatch": "Passwords do not match", "deliverySaved": "Company settings saved successfully", "deliveryError": "Could not save company settings" },
+    "error": { "title": "Could not retrieve your profile", "description": "Check the API connection and try again." }
+  },
   "Common": {
     "appName": "Salis",
     "login": "Log in",
@@ -58,7 +377,7 @@
     "shopOwnerFeatureTwo": "Cart-based order creation",
     "shopOwnerFeatureThree": "Payments and returns",
     "deliveryCompany": "Delivery company",
-    "deliveryCompanyDescription": "Review assigned orders, manage drivers, control coverage zones, and settle shop payments.",
+    "deliveryCompanyDescription": "Review assigned orders, create and manage drivers, control coverage zones, and settle shop payments.",
     "companyFeatureOne": "Automatic order assignment",
     "companyFeatureTwo": "Driver management",
     "companyFeatureThree": "Delivery and payment overview",
@@ -76,11 +395,11 @@
     "faqTitle": "Got a question about Salis?",
     "faqDescription": "Here are the important things to know before using the platform.",
     "faqAccountQuestion": "Can anyone create a Salis account?",
-    "faqAccountAnswer": "No. Accounts are created by the platform administrator for verified shop owners, delivery companies, and drivers.",
+    "faqAccountAnswer": "No. The platform administrator creates shop owner and delivery company accounts. Each delivery company creates and manages its own drivers.",
     "faqAssignmentQuestion": "How is a delivery company selected?",
-    "faqAssignmentAnswer": "Salis automatically selects an available company using the customers delivery zone and the company’s delivery price.",
+    "faqAssignmentAnswer": "Salis automatically selects an available company using the customer's delivery zone and the company's delivery price.",
     "faqPickupQuestion": "How does the pickup code work?",
-    "faqPickupAnswer": "The driver enters the orders pickup code to confirm that the package was received from the correct shop.",
+    "faqPickupAnswer": "The driver enters the order's pickup code to confirm that the package was received from the correct shop.",
     "faqPaymentQuestion": "How are prices and commissions calculated?",
     "faqPaymentAnswer": "The backend calculates the product total, delivery fee, customer total, and platform commissions so financial values cannot be changed from the browser."
   },
@@ -94,7 +413,7 @@
     "hidePassword": "Hide password",
     "loggingIn": "Logging in...",
     "success": "Logged in successfully",
-    "adminNotice": "Accounts are created and managed by the Salis administrator."
+    "adminNotice": "Shop owner and delivery company accounts are created by the Salis administrator."
   },
   "Footer": {
     "eyebrow": "Ready to simplify every delivery?",

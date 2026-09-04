@@ -52,6 +52,12 @@ export class OrdersController {
     return this.ordersService.getAssignedOrders(user, orderQueryDto);
   }
 
+  // Get accurate summary data for the logged-in shop owner
+  @Get('shop-owner/dashboard')
+  getShopOwnerDashboard(@CurrentUser() user: JwtUser) {
+    return this.ordersService.getShopOwnerDashboard(user);
+  }
+
   // Get one order by its ID
   @Get(':id')
   getOrderById(

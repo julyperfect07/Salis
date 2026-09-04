@@ -1,0 +1,2 @@
+import { getTranslations } from "next-intl/server"; import { DashboardShell } from "@/components/layout/dashboard-shell"; import { ShopOrders } from "@/features/shop-owner/components/shop-orders";
+export default async function OrdersPage() { const t = await getTranslations("ShopOwner"); return <DashboardShell title={t("orders.pageTitle")} description={t("orders.pageDescription")}><div className="mx-auto max-w-6xl"><ShopOrders /></div></DashboardShell>; }

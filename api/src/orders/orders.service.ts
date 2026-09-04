@@ -18,6 +18,17 @@ import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
 const COMMISSION_RATE = 0.025;
 
 const orderInclude = {
+  shopOwner: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          phoneNumber: true,
+        },
+      },
+    },
+  },
   deliveryCompany: {
     include: {
       user: {
@@ -323,6 +334,42 @@ export class OrdersService {
   }
 
   // Get shop orders with filtering and pagination
+  async getShopOwnerDashboard(user: JwtUser) {
+    this.ensureShopOwner(user);
+
+    const [activeProducts, totalOrders, deliveredFinancials, recentOrders] =
+      await Promise.all([
+        this.prisma.product.count({
+          where: { shopOwnerId: user.id, isActive: true },
+        }),
+        this.prisma.order.count({ where: { shopOwnerId: user.id } }),
+        this.prisma.order.aggregate({
+          where: { shopOwnerId: user.id, status: OrderStatus.DELIVERED },
+          _sum: { totalPrice: true, shopCommission: true },
+        }),
+        this.prisma.order.findMany({
+          where: { shopOwnerId: user.id },
+          include: orderInclude,
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+      ]);
+
+    const productsTotal = Number(deliveredFinancials._sum.totalPrice ?? 0);
+    const commission = Number(
+      deliveredFinancials._sum.shopCommission ?? 0,
+    );
+
+    return {
+      message: 'Shop owner dashboard retrieved successfully',
+      activeProducts,
+      totalOrders,
+      netSales: (productsTotal - commission).toFixed(3),
+      recentOrders,
+    };
+  }
+
+  // Get shop orders with filtering and pagination
   async getOrders(user: JwtUser, orderQueryDto: OrderQueryDto) {
     this.ensureShopOwner(user);
 
@@ -364,7 +411,7 @@ export class OrdersService {
 
   // Get one authorized order
   async getOrderById(user: JwtUser, orderId: string) {
-    let where: Prisma.OrderWhereInput = {
+    const where: Prisma.OrderWhereInput = {
       id: orderId,
     };
 

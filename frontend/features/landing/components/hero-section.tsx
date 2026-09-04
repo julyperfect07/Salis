@@ -14,7 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
+import { LoginDialog } from "@/features/auth/components/login-dialog";
 const statistics = [
   { value: "1K+", key: "liveOrders" },
   { value: "94.8%", key: "deliveryRate" },
@@ -103,15 +103,10 @@ export function HeroSection() {
               }}
               className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start"
             >
-              <Button
-                nativeButton={false}
-                size="lg"
-                className="h-12 rounded-full px-7"
-                render={<a href="#how-it-works" />}
-              >
-                {t("getStarted")}
-                <ArrowUpRight className="size-4 rtl:-scale-x-100" />
-              </Button>
+              <LoginDialog
+                triggerLabel={t("getStarted")}
+                triggerClassName="h-12 px-7 shadow-lg shadow-primary/20"
+              />
 
               <Button
                 nativeButton={false}

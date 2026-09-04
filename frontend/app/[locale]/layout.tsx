@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
+import "leaflet/dist/leaflet.css";
 
 const manrope = Manrope({
   variable: "--font-manrope",
