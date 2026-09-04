@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +50,15 @@ function getErrorMessage(error: unknown) {
     : (message ?? "Invalid email or password.");
 }
 
-export function LoginDialog() {
+interface LoginDialogProps {
+  triggerLabel?: string;
+  triggerClassName?: string;
+}
+
+export function LoginDialog({
+  triggerLabel,
+  triggerClassName,
+}: LoginDialogProps) {
   const t = useTranslations("Auth");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -97,7 +106,11 @@ export function LoginDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button className="rounded-full px-6 shadow-sm">{t("login")}</Button>
+          <Button
+            className={cn("rounded-full px-6 shadow-sm", triggerClassName)}
+          >
+            {triggerLabel ?? t("login")}
+          </Button>
         }
       />
 
