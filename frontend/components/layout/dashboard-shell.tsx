@@ -173,13 +173,13 @@ export function DashboardShell({
     <div className="min-h-screen bg-[#dedee2] p-2 sm:p-4 lg:p-7 dark:bg-[#111411]">
       <div className="mx-auto min-h-[calc(100vh-1rem)] max-w-375 overflow-hidden rounded-[2rem] border border-white/70 bg-[#f4f5f2] shadow-sm sm:min-h-[calc(100vh-2rem)] dark:border-white/10 dark:bg-[#171a17]">
         <header className="px-3 pt-3 sm:px-5 sm:pt-5">
-          <div className="flex min-h-16 items-center justify-between gap-3 rounded-full border border-white/80 bg-white px-3 shadow-sm dark:border-white/10 dark:bg-[#202420] sm:px-5">
+          <div className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/90 px-3 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#202420]/90 sm:px-4">
             <Link
-              href={`/${locale}`}
-              className="flex shrink-0 items-center gap-2.5"
+              href={user ? `/${locale}${roleRoutes[user.role]}` : `/${locale}`}
+              className="group flex shrink-0 items-center gap-2.5"
             >
-              <div className="flex size-9 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
-                س
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform duration-200 group-hover:scale-105">
+                <PackageCheck className="size-4" />
               </div>
 
               <div className="hidden sm:block">
@@ -258,17 +258,14 @@ export function DashboardShell({
         </header>
 
         <main className="px-4 pb-28 pt-8 sm:px-7 lg:px-12">
-          <section className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+          <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                {title}
+              <p className="mb-2 text-sm font-medium text-primary">
+                {t("welcome")} {user?.name?.split(" ")[0] ?? ""}
               </p>
 
-              <h1 className="text-3xl font-medium tracking-[-0.04em] sm:text-4xl lg:text-5xl">
-                {t("welcome")}{" "}
-                <span className="font-light text-muted-foreground">
-                  {user?.name?.split(" ")[0] ?? ""}
-                </span>
+              <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
+                {title}
               </h1>
 
               {description && (

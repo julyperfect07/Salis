@@ -35,7 +35,7 @@ export function LandingNavbar() {
     <header className="fixed inset-x-0 top-4 z-50 px-4">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between rounded-full border border-border/70 bg-card/85 px-4 shadow-sm backdrop-blur-xl sm:px-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+          <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm shadow-primary/20">
             <PackageCheck className="size-5" />
           </span>
 

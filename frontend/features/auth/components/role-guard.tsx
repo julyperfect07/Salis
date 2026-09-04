@@ -24,7 +24,7 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const router = useRouter();
   const { data: user, isLoading, isError } = useCurrentUser();
 
-  const isAllowed = user !== undefined && allowedRoles.includes(user.role);
+  const isAllowed = Boolean(user && allowedRoles.includes(user.role));
 
   useEffect(() => {
     if (isLoading) return;
