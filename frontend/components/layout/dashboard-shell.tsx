@@ -224,7 +224,11 @@ export function DashboardShell({
                   </Avatar>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-xl p-2">
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="w-56 rounded-xl p-2"
+                >
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="px-2 py-2">
                       <span className="block truncate text-sm font-semibold text-foreground">
@@ -260,36 +264,36 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="px-4 pb-28 pt-8 sm:px-7 lg:px-12">
+        <main className="px-4 pb-28 pt-8 sm:px-7 md:pl-24 lg:pr-12 lg:pl-28">
           <div className={cn("mx-auto max-w-7xl", contentClassName)}>
-          <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-            <div>
-              <p className="mb-2 text-sm font-medium text-primary">
-                {t("welcome")} {user?.name?.split(" ")[0] ?? ""}
-              </p>
-
-              <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-                {title}
-              </h1>
-
-              {description && (
-                <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-                  {description}
+            <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+              <div>
+                <p className="mb-2 text-sm font-medium text-primary">
+                  {t("welcome")} {user?.name?.split(" ")[0] ?? ""}
                 </p>
-              )}
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex h-10 items-center gap-2 rounded-full border bg-background px-4 text-sm shadow-sm">
-                <CalendarDays className="size-4 text-muted-foreground" />
-                <span>{formattedDate}</span>
+                <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
+                  {title}
+                </h1>
+
+                {description && (
+                  <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                    {description}
+                  </p>
+                )}
               </div>
 
-              {action}
-            </div>
-          </section>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex h-10 items-center gap-2 rounded-full border bg-background px-4 text-sm shadow-sm">
+                  <CalendarDays className="size-4 text-muted-foreground" />
+                  <span>{formattedDate}</span>
+                </div>
 
-          {children}
+                {action}
+              </div>
+            </section>
+
+            {children}
           </div>
         </main>
       </div>
@@ -297,8 +301,8 @@ export function DashboardShell({
       {navigationItems.length > 0 && (
         <FloatingDock
           items={navigationItems}
-          desktopClassName="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 border border-border bg-background/90 shadow-xl backdrop-blur-xl dark:bg-card/90"
-          mobileClassName="fixed bottom-5 end-5 z-50"
+          desktopClassName="fixed left-5 top-1/2 z-50 -translate-y-1/2 border border-border bg-background/90 shadow-xl backdrop-blur-xl dark:bg-card/90"
+          mobileClassName="fixed bottom-5 left-5 z-50"
         />
       )}
     </div>

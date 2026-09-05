@@ -1,3 +1,4 @@
+// عشان تفتح الخريطة بناءا على الاحداثيات تعيت ال customer
 export function getGoogleMapsDirectionsUrl(
   latitude: string | number,
   longitude: string | number,

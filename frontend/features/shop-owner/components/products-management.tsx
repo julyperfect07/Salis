@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { motion, useReducedMotion } from "motion/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type { Product } from "../shop-owner.types";
 import { useProductMutations, useProducts } from "../use-shop-owner";
 
@@ -239,7 +241,10 @@ function ProductDialog({ product }: { product?: Product }) {
             >
               {t("actions.cancel")}
             </Button>
-            <Button type="submit" disabled={mutation.isPending || upload.isPending}>
+            <Button
+              type="submit"
+              disabled={mutation.isPending || upload.isPending}
+            >
               {mutation.isPending && (
                 <LoaderCircle className="size-4 animate-spin" />
               )}
@@ -269,6 +274,7 @@ export function ProductsManagement() {
     sortOrder: sort === "name" ? "asc" : "desc",
   });
   const { active: activeMutation } = useProductMutations();
+  const reduceMotion = useReducedMotion();
   const money = (value: string) =>
     new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", {
       style: "currency",
@@ -354,69 +360,108 @@ export function ProductsManagement() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {data.products.map((product) => (
-              <Card
+            {data.products.map((product, index) => (
+              <motion.div
                 key={product.id}
-                className="rounded-3xl transition-all hover:-translate-y-1 hover:shadow-lg"
+                initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.35,
+                  delay: reduceMotion ? 0 : index * 0.045,
+                }}
+                whileHover={reduceMotion ? undefined : { y: -5 }}
               >
-                <div className="relative h-52 bg-muted">
-                  {product.imageUrls[0] ? (
-                    <ProductImage
-                      src={product.imageUrls[0]}
-                      alt={product.name}
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <Package className="size-10 text-muted-foreground" />
-                    </div>
-                  )}
-                  <Badge className="absolute end-3 top-3 rounded-full">
-                    {money(product.price)}
-                  </Badge>
-                </div>
-                <CardContent>
-                  <h3 className="text-lg font-semibold">{product.name}</h3>
-                  <p className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">
-                    {product.description || t("products.noDescription")}
-                  </p>
-                  <div className="mt-4 flex gap-2">
-                    <ProductDialog product={product} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full"
-                      disabled={activeMutation.isPending}
-                      onClick={() => {
-                        if (
-                          !product.isActive ||
-                          window.confirm(t("products.archiveConfirm"))
-                        )
-                          activeMutation.mutate(
-                            { id: product.id, active: !product.isActive },
-                            {
-                              onSuccess: () =>
-                                toast.success(
-                                  t(
-                                    product.isActive
-                                      ? "products.messages.archived"
-                                      : "products.messages.restored",
-                                  ),
-                                ),
-                            },
-                          );
-                      }}
-                    >
-                      <ArchiveRestore className="size-4" />
+                <Card className="group h-full overflow-hidden rounded-3xl border-border/70 shadow-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/5">
+                  <div className="relative h-52 overflow-hidden bg-linear-to-br from-primary/10 via-muted to-muted">
+                    {product.imageUrls[0] ? (
+                      <ProductImage
+                        src={product.imageUrls[0]}
+                        alt={product.name}
+                        className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Package className="size-10 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/35 via-transparent to-black/5 opacity-70 transition-opacity group-hover:opacity-90" />
+                    <Badge className="absolute start-3 top-3 gap-1.5 rounded-full border-white/15 bg-background/90 text-foreground shadow-sm backdrop-blur-md hover:bg-background/90">
+                      <span
+                        className={cn(
+                          "size-1.5 rounded-full",
+                          product.isActive
+                            ? "bg-primary"
+                            : "bg-muted-foreground",
+                        )}
+                      />
                       {t(
                         product.isActive
-                          ? "products.archive"
-                          : "products.restore",
+                          ? "products.active"
+                          : "products.archived",
                       )}
-                    </Button>
+                    </Badge>
+                    <Badge className="absolute end-3 top-3 rounded-full shadow-lg shadow-black/10">
+                      {money(product.price)}
+                    </Badge>
+                    {product.imageUrls.length > 1 && (
+                      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/25 px-2 py-1.5 backdrop-blur-sm">
+                        {product.imageUrls.map((image, imageIndex) => (
+                          <span
+                            key={`${image}-${imageIndex}`}
+                            className={cn(
+                              "size-1.5 rounded-full bg-white/55",
+                              imageIndex === 0 && "w-4 bg-white",
+                            )}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                  <CardContent className="p-5">
+                    <h3 className="text-lg font-semibold tracking-tight transition-colors group-hover:text-primary">
+                      {product.name}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 min-h-10 text-sm text-muted-foreground">
+                      {product.description || t("products.noDescription")}
+                    </p>
+                    <div className="mt-5 flex gap-2 border-t pt-4">
+                      <ProductDialog product={product} />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                        disabled={activeMutation.isPending}
+                        onClick={() => {
+                          if (
+                            !product.isActive ||
+                            window.confirm(t("products.archiveConfirm"))
+                          )
+                            activeMutation.mutate(
+                              { id: product.id, active: !product.isActive },
+                              {
+                                onSuccess: () =>
+                                  toast.success(
+                                    t(
+                                      product.isActive
+                                        ? "products.messages.archived"
+                                        : "products.messages.restored",
+                                    ),
+                                  ),
+                              },
+                            );
+                        }}
+                      >
+                        <ArchiveRestore className="size-4" />
+                        {t(
+                          product.isActive
+                            ? "products.archive"
+                            : "products.restore",
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
           <div className="flex items-center justify-between rounded-full border bg-card px-4 py-2">

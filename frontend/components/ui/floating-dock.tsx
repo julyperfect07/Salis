@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import {
   AnimatePresence,
   MotionValue,
@@ -12,187 +13,199 @@ import {
 } from "motion/react";
 import { useRef, useState } from "react";
 
+interface DockItem {
+  title: string;
+  icon: React.ReactNode;
+  href: string;
+}
+
+function isActiveRoute(pathname: string, href: string) {
+  if (pathname === href) return true;
+  const isDashboardRoot = href.split("/").filter(Boolean).length === 2;
+  return !isDashboardRoot && pathname.startsWith(`${href}/`);
+}
+
 export const FloatingDock = ({
   items,
   desktopClassName,
   mobileClassName,
 }: {
-  items: { title: string; icon: React.ReactNode; href: string }[];
+  items: DockItem[];
   desktopClassName?: string;
   mobileClassName?: string;
 }) => {
+  const pathname = usePathname();
   return (
     <>
-      <FloatingDockDesktop items={items} className={desktopClassName} />
-      <FloatingDockMobile items={items} className={mobileClassName} />
+      <FloatingDockDesktop
+        items={items}
+        pathname={pathname}
+        className={desktopClassName}
+      />
+      <FloatingDockMobile
+        items={items}
+        pathname={pathname}
+        className={mobileClassName}
+      />
     </>
   );
 };
 
-const FloatingDockMobile = ({
+function FloatingDockMobile({
   items,
+  pathname,
   className,
 }: Readonly<{
-  items: { title: string; icon: React.ReactNode; href: string }[];
+  items: DockItem[];
+  pathname: string;
   className?: string;
-}>) => {
+}>) {
   const [open, setOpen] = useState(false);
   return (
     <div className={cn("relative block md:hidden", className)}>
       <AnimatePresence>
         {open && (
-          <motion.div
-            layoutId="nav"
-            className="absolute inset-x-0 bottom-full mb-2 flex flex-col gap-2"
+          <motion.nav
+            aria-label="Dashboard navigation"
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            className="absolute bottom-full left-0 mb-2 flex flex-col gap-2 rounded-2xl border bg-background/95 p-2 shadow-xl backdrop-blur-xl"
           >
-            {items.map((item, idx) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                  transition: {
-                    delay: idx * 0.05,
-                  },
-                }}
-                transition={{ delay: (items.length - 1 - idx) * 0.05 }}
-              >
-                <a
+            {items.map((item, index) => {
+              const active = isActiveRoute(pathname, item.href);
+              return (
+                <motion.a
+                  key={item.href}
                   href={item.href}
-                  key={item.title}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900"
+                  aria-label={item.title}
+                  aria-current={active ? "page" : undefined}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  className={cn(
+                    "relative flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                    active && "bg-primary/10 text-primary",
+                  )}
                 >
-                  <div className="h-4 w-4">{item.icon}</div>
-                </a>
-              </motion.div>
-            ))}
-          </motion.div>
+                  {active && (
+                    <span className="absolute left-0 h-5 w-1 rounded-full bg-primary" />
+                  )}
+                  <span className="size-5">{item.icon}</span>
+                </motion.a>
+              );
+            })}
+          </motion.nav>
         )}
       </AnimatePresence>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-800"
+        onClick={() => setOpen((current) => !current)}
+        aria-label={open ? "Close navigation" : "Open navigation"}
+        aria-expanded={open}
+        className="flex size-11 items-center justify-center rounded-full border bg-background/95 text-muted-foreground shadow-xl backdrop-blur-xl transition hover:text-foreground"
       >
-        <Menu className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+        {open ? <X className="size-5" /> : <Menu className="size-5" />}
       </button>
     </div>
   );
-};
+}
 
-const FloatingDockDesktop = ({
+function FloatingDockDesktop({
   items,
+  pathname,
   className,
 }: Readonly<{
-  items: { title: string; icon: React.ReactNode; href: string }[];
+  items: DockItem[];
+  pathname: string;
   className?: string;
-}>) => {
-  const mouseX = useMotionValue(Infinity);
+}>) {
+  const mouseY = useMotionValue(Infinity);
   return (
-    <motion.div
-      onMouseMove={(e) => mouseX.set(e.pageX)}
-      onMouseLeave={() => mouseX.set(Infinity)}
+    <motion.nav
+      aria-label="Dashboard navigation"
+      onMouseMove={(event) => mouseY.set(event.pageY)}
+      onMouseLeave={() => mouseY.set(Infinity)}
       className={cn(
-        "mx-auto hidden h-16 items-end gap-4 rounded-2xl bg-gray-50 px-4 pb-3 md:flex dark:bg-neutral-900",
+        "hidden flex-col items-center gap-3 rounded-2xl bg-background px-3 py-4 md:flex",
         className,
       )}
     >
       {items.map((item) => (
-        <IconContainer mouseX={mouseX} key={item.title} {...item} />
+        <IconContainer
+          mouseY={mouseY}
+          active={isActiveRoute(pathname, item.href)}
+          key={item.href}
+          {...item}
+        />
       ))}
-    </motion.div>
+    </motion.nav>
   );
-};
+}
 
 function IconContainer({
-  mouseX,
+  mouseY,
   title,
   icon,
   href,
-}: Readonly<{
-  mouseX: MotionValue;
-  title: string;
-  icon: React.ReactNode;
-  href: string;
-}>) {
+  active,
+}: Readonly<DockItem & { mouseY: MotionValue<number>; active: boolean }>) {
   const ref = useRef<HTMLDivElement>(null);
-
-  const distance = useTransform(mouseX, (val) => {
-    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
-
-    return val - bounds.x - bounds.width / 2;
-  });
-
-  const widthTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
-  const heightTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
-
-  const widthTransformIcon = useTransform(
-    distance,
-    [-150, 0, 150],
-    [20, 40, 20],
-  );
-  const heightTransformIcon = useTransform(
-    distance,
-    [-150, 0, 150],
-    [20, 40, 20],
-  );
-
-  const width = useSpring(widthTransform, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-  const height = useSpring(heightTransform, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-
-  const widthIcon = useSpring(widthTransformIcon, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-  const heightIcon = useSpring(heightTransformIcon, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-
   const [hovered, setHovered] = useState(false);
+  const distance = useTransform(mouseY, (value) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { y: 0, height: 0 };
+    return value - bounds.y - bounds.height / 2;
+  });
+  const size = useSpring(useTransform(distance, [-120, 0, 120], [42, 62, 42]), {
+    mass: 0.1,
+    stiffness: 180,
+    damping: 15,
+  });
+  const iconSize = useSpring(
+    useTransform(distance, [-120, 0, 120], [19, 29, 19]),
+    { mass: 0.1, stiffness: 180, damping: 15 },
+  );
 
   return (
-    <a href={href}>
+    <a
+      href={href}
+      aria-label={title}
+      aria-current={active ? "page" : undefined}
+    >
       <motion.div
         ref={ref}
-        style={{ width, height }}
+        style={{ width: size, height: size }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="relative flex aspect-square items-center justify-center rounded-full bg-gray-200 dark:bg-neutral-800"
+        className={cn(
+          "relative flex items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground",
+          active && "bg-primary/12 text-primary ring-1 ring-primary/20",
+        )}
       >
+        {active && (
+          <motion.span
+            layoutId="active-dock-indicator"
+            className="absolute -left-3 h-6 w-1 rounded-full bg-primary shadow-[0_0_12px_var(--primary)]"
+          />
+        )}
         <AnimatePresence>
           {hovered && (
             <motion.div
-              initial={{ opacity: 0, y: 10, x: "-50%" }}
-              animate={{ opacity: 1, y: 0, x: "-50%" }}
-              exit={{ opacity: 0, y: 2, x: "-50%" }}
-              className="absolute -top-8 left-1/2 w-fit rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs whitespace-pre text-neutral-700 dark:border-neutral-900 dark:bg-neutral-800 dark:text-white"
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -4 }}
+              className="absolute left-full ml-3 whitespace-nowrap rounded-lg border bg-popover px-2.5 py-1.5 text-xs font-medium text-popover-foreground shadow-md"
             >
               {title}
             </motion.div>
           )}
         </AnimatePresence>
-        <motion.div
-          style={{ width: widthIcon, height: heightIcon }}
+        <motion.span
+          style={{ width: iconSize, height: iconSize }}
           className="flex items-center justify-center"
         >
           {icon}
-        </motion.div>
+        </motion.span>
       </motion.div>
     </a>
   );
