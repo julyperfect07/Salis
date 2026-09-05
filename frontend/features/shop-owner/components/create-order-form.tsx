@@ -67,6 +67,8 @@ export function CreateOrderForm() {
     new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", {
       style: "currency",
       currency: "JOD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   const quantity = (id: string, delta: number) =>
     setCart((current) => ({

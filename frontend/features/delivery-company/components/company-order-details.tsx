@@ -17,7 +17,7 @@ import { getGoogleMapsDirectionsUrl } from "@/lib/maps";
 export function CompanyOrderDetails({ orderId }: { orderId: string }) {
   const t = useTranslations("DeliveryCompany"); const locale = useLocale(); const { data, isLoading, isError, refetch } = useCompanyOrder(orderId); const { data: drivers } = useDrivers();
   const accept = useAcceptOrder(); const reject = useRejectOrder(); const assign = useAssignDriver(); const payment = useConfirmPayment(); const [rejectOpen, setRejectOpen] = useState(false); const [reason, setReason] = useState("");
-  const money = (v: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD" }).format(Number(v));
+  const money = (v: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
   if (isLoading) return <Skeleton className="h-[35rem] rounded-3xl"/>;
   if (isError || !data) return <Card><CardContent className="flex min-h-64 flex-col items-center justify-center gap-4"><Package/><p>{t("common.loadError")}</p><Button onClick={() => refetch()}>{t("actions.retry")}</Button></CardContent></Card>;
   const order = data.order; const activeDrivers = drivers?.drivers.filter(d => d.user.isActive !== false) ?? [];

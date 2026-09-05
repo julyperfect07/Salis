@@ -30,6 +30,7 @@ function formatMoney(value: string, locale: string) {
     style: "currency",
     currency: "JOD",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(Number(value));
 }
 

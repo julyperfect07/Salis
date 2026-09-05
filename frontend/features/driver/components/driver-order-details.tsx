@@ -18,7 +18,7 @@ export function DriverOrderDetails({ orderId }: { orderId: string }) {
   const t = useTranslations("Driver"); const locale = useLocale(); const { data, isLoading, isError, refetch } = useDriverOrder(orderId);
   const pickup = useVerifyPickup(); const start = useStartDelivery(); const deliver = useDeliverOrder(); const fail = useFailOrder();
   const [pickupCode, setPickupCode] = useState(""); const [completeOpen, setCompleteOpen] = useState(false); const [failOpen, setFailOpen] = useState(false); const [reason, setReason] = useState("");
-  const money = (v: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD" }).format(Number(v));
+  const money = (v: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
   if (isLoading) return <Skeleton className="h-[38rem] rounded-3xl"/>;
   if (isError || !data) return <Card className="rounded-3xl"><CardContent className="flex min-h-64 flex-col items-center justify-center gap-4"><Package className="size-10 text-destructive"/><p>{t("common.loadError")}</p><Button onClick={() => refetch()}>{t("actions.retry")}</Button></CardContent></Card>;
   const order = data.order; const done = (message: string) => { toast.success(message); refetch(); };

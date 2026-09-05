@@ -27,7 +27,7 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
   if (isError || !data) return <Card className="rounded-3xl"><CardContent className="flex min-h-72 flex-col items-center justify-center gap-4 text-center"><ClipboardList className="size-10 text-destructive" /><div><h2 className="font-semibold">{t("details.errorTitle")}</h2><p className="mt-1 text-muted-foreground">{t("details.errorDescription")}</p></div><Button onClick={() => refetch()}>{t("actions.retry")}</Button></CardContent></Card>;
 
   const { order } = data;
-  const money = (value: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD" }).format(Number(value));
+  const money = (value: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value));
   const date = new Intl.DateTimeFormat(locale === "ar" ? "ar-JO" : "en-GB", { dateStyle: "long", timeStyle: "short" }).format(new Date(order.createdAt));
 
   return <div className="space-y-4">

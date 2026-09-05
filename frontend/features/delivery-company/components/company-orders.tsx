@@ -20,7 +20,7 @@ export function CompanyOrders() {
   const [page, setPage] = useState(1); const [search, setSearch] = useState(""); const [status, setStatus] = useState<OrderStatus | "ALL">("ALL");
   const deferredSearch = useDeferredValue(search.trim());
   const { data, isLoading, isError, refetch } = useCompanyOrders({ page, limit: 9, search: deferredSearch || undefined, status: status === "ALL" ? undefined : status });
-  const money = (v: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD" }).format(Number(v));
+  const money = (v: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
   const date = (v: string) => new Intl.DateTimeFormat(locale === "ar" ? "ar-JO" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(v));
 
   return <div className="space-y-4"><Card className="rounded-3xl"><CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_13rem] sm:p-5"><div className="relative"><Search className="absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder={t("orders.search")} className="h-11 rounded-full ps-11" /></div><Select value={status} onValueChange={value => { if (value) { setStatus(value as OrderStatus | "ALL"); setPage(1); } }}><SelectTrigger className="h-11 w-full rounded-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ALL">{t("orders.allStatuses")}</SelectItem>{statuses.map(s => <SelectItem key={s} value={s}>{t(`statuses.${s}`)}</SelectItem>)}</SelectContent></Select></CardContent></Card>

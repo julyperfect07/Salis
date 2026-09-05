@@ -79,6 +79,8 @@ export function OrdersManagement() {
     new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", {
       style: "currency",
       currency: "JOD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(Number(value));
 
   return (

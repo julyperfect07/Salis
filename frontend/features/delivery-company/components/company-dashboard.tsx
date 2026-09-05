@@ -14,7 +14,7 @@ export function CompanyDashboard() {
   const t = useTranslations("DeliveryCompany");
   const locale = useLocale();
   const { data, isLoading, isError, refetch } = useCompanyDashboard();
-  const money = (value: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD" }).format(Number(value));
+  const money = (value: string) => new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", { style: "currency", currency: "JOD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value));
 
   if (isLoading) return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-3xl" />)}</div>;
   if (isError || !data) return <Card className="rounded-3xl"><CardContent className="flex min-h-64 flex-col items-center justify-center gap-4"><Package className="size-10 text-destructive" /><p>{t("common.loadError")}</p><Button onClick={() => refetch()}>{t("actions.retry")}</Button></CardContent></Card>;
