@@ -10,10 +10,7 @@ export type OrderStatus =
   | "REJECTED";
 
 export type PaymentStatus =
-  | "PENDING"
-  | "COLLECTED"
-  | "PAID_TO_SHOP"
-  | "NOT_COLLECTED";
+  "PENDING" | "COLLECTED" | "PAID_TO_SHOP" | "NOT_COLLECTED";
 
 interface OrderParty {
   user: {
@@ -66,6 +63,7 @@ export interface AdminOrdersQuery {
   paymentStatus?: PaymentStatus;
   fromDate?: string;
   toDate?: string;
+  active?: boolean;
 }
 
 export interface AdminOrdersResponse {

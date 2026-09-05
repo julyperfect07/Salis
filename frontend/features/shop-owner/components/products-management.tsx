@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { usePaginationCorrection } from "@/hooks/use-pagination-correction";
 import type { Product } from "../shop-owner.types";
 import { useProductMutations, useProducts } from "../use-shop-owner";
 
@@ -274,6 +275,7 @@ export function ProductsManagement() {
     sortOrder: sort === "name" ? "asc" : "desc",
   });
   const { active: activeMutation } = useProductMutations();
+  usePaginationCorrection(page, data?.pagination.totalPages, setPage);
   const reduceMotion = useReducedMotion();
   const money = (value: string) =>
     new Intl.NumberFormat(locale === "ar" ? "ar-JO" : "en-JO", {

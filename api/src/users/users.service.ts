@@ -11,12 +11,12 @@ import { Role } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import type { JwtUser } from '../auth/types/jwt-user.type';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateDeliveryCompanyProfileDto } from './dto/update-delivery-company-profile.dto';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
+import { DriverQueryDto } from './dto/driver-query.dto';
 
 @Injectable()
 export class UsersService {
@@ -121,18 +121,28 @@ export class UsersService {
   }
 
   // Get drivers belonging to the logged-in delivery company
-  async getCompanyDrivers(user: JwtUser, paginationDto: PaginationDto) {
+  async getCompanyDrivers(user: JwtUser, paginationDto: DriverQueryDto) {
     if (user.role !== Role.DELIVERY_COMPANY) {
       throw new ForbiddenException(
         'Only delivery companies can view their drivers',
       );
     }
 
-    const { page, limit } = paginationDto;
+    const { page, limit, search } = paginationDto;
     const skip = (page - 1) * limit;
+    const cleanSearch = search?.trim();
 
     const where = {
       companyId: user.id,
+      ...(cleanSearch && {
+        user: {
+          OR: [
+            { name: { contains: cleanSearch, mode: 'insensitive' as const } },
+            { email: { contains: cleanSearch, mode: 'insensitive' as const } },
+            { phoneNumber: { contains: cleanSearch } },
+          ],
+        },
+      }),
     };
 
     const [drivers, total] = await Promise.all([
@@ -177,11 +187,15 @@ export class UsersService {
 
   async createCompanyDriver(user: JwtUser, dto: CreateDriverDto) {
     if (user.role !== Role.DELIVERY_COMPANY) {
-      throw new ForbiddenException('Only delivery companies can create drivers');
+      throw new ForbiddenException(
+        'Only delivery companies can create drivers',
+      );
     }
 
     const email = dto.email.toLowerCase().trim();
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
     if (existingUser) {
       throw new ConflictException('Email is already in use');
@@ -217,7 +231,9 @@ export class UsersService {
     dto: UpdateDriverStatusDto,
   ) {
     if (user.role !== Role.DELIVERY_COMPANY) {
-      throw new ForbiddenException('Only delivery companies can manage drivers');
+      throw new ForbiddenException(
+        'Only delivery companies can manage drivers',
+      );
     }
 
     const driver = await this.prisma.driver.findFirst({
@@ -242,7 +258,10 @@ export class UsersService {
       },
     });
 
-    return { message: 'Driver status updated successfully', driver: updatedDriver };
+    return {
+      message: 'Driver status updated successfully',
+      driver: updatedDriver,
+    };
   }
 
   // Get the logged-in user's profile without sensitive fields

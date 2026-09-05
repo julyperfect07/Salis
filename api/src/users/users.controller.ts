@@ -17,12 +17,12 @@ import { JwtGuard } from '../auth/guards/jwt.guard';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import type { JwtUser } from '../auth/types/jwt-user.type';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateDeliveryCompanyProfileDto } from './dto/update-delivery-company-profile.dto';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
+import { DriverQueryDto } from './dto/driver-query.dto';
 
 @Controller('users')
 export class UsersController {
@@ -42,7 +42,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   getCompanyDrivers(
     @CurrentUser() user: JwtUser,
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: DriverQueryDto,
   ) {
     return this.usersService.getCompanyDrivers(user, paginationDto);
   }

@@ -1,8 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useDeferredValue, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Search, UserRoundPlus, Users } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Search,
+  UserRoundPlus,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePaginationCorrection } from "@/hooks/use-pagination-correction";
 import {
   useCreateDriver,
   useDrivers,
@@ -29,15 +37,17 @@ export function CompanyDrivers() {
   const t = useTranslations("DeliveryCompany");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const { data, isLoading, isError, refetch } = useDrivers();
+  const [page, setPage] = useState(1);
+  const deferredSearch = useDeferredValue(search.trim());
+  const { data, isLoading, isError, refetch } = useDrivers(
+    page,
+    9,
+    deferredSearch || undefined,
+  );
   const create = useCreateDriver();
   const status = useUpdateDriverStatus();
-  const drivers =
-    data?.drivers.filter(({ user }) =>
-      `${user.name} ${user.email} ${user.phoneNumber}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    ) ?? [];
+  const drivers = data?.drivers ?? [];
+  usePaginationCorrection(page, data?.pagination.totalPages, setPage);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -65,7 +75,10 @@ export function CompanyDrivers() {
           <Search className="absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder={t("drivers.search")}
             className="h-11 rounded-full bg-card ps-11"
           />
@@ -104,7 +117,11 @@ export function CompanyDrivers() {
                 required
                 minLength={8}
               />
-              <Button type="submit" disabled={create.isPending} className="mt-2 rounded-full">
+              <Button
+                type="submit"
+                disabled={create.isPending}
+                className="mt-2 rounded-full"
+              >
                 {create.isPending ? t("drivers.creating") : t("drivers.create")}
               </Button>
             </form>
@@ -136,68 +153,103 @@ export function CompanyDrivers() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {drivers.map(({ user }) => {
-            const active = user.isActive !== false;
-            return (
-              <Card key={user.id} className="rounded-3xl">
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="size-12">
-                      <AvatarImage src={user.imageUrl ?? undefined} />
-                      <AvatarFallback className="bg-primary/10 font-semibold text-primary">
-                        {user.name
-                          .split(" ")
-                          .map((v) => v[0])
-                          .slice(0, 2)
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate font-semibold">{user.name}</p>
-                        <Badge
-                          variant={active ? "default" : "secondary"}
-                          className="rounded-full"
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {drivers.map(({ user }) => {
+              const active = user.isActive !== false;
+              return (
+                <Card key={user.id} className="rounded-3xl">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="size-12">
+                        <AvatarImage src={user.imageUrl ?? undefined} />
+                        <AvatarFallback className="bg-primary/10 font-semibold text-primary">
+                          {user.name
+                            .split(" ")
+                            .map((v) => v[0])
+                            .slice(0, 2)
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate font-semibold">{user.name}</p>
+                          <Badge
+                            variant={active ? "default" : "secondary"}
+                            className="rounded-full"
+                          >
+                            {active
+                              ? t("drivers.active")
+                              : t("drivers.suspended")}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          {user.email}
+                        </p>
+                        <p
+                          className="mt-0.5 text-sm text-muted-foreground"
+                          dir="ltr"
                         >
-                          {active
-                            ? t("drivers.active")
-                            : t("drivers.suspended")}
-                        </Badge>
+                          {user.phoneNumber}
+                        </p>
                       </div>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
-                        {user.email}
-                      </p>
-                      <p
-                        className="mt-0.5 text-sm text-muted-foreground"
-                        dir="ltr"
-                      >
-                        {user.phoneNumber}
-                      </p>
                     </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="mt-5 w-full rounded-full"
-                    disabled={status.isPending}
-                    onClick={() =>
-                      status.mutate(
-                        { id: user.id, isActive: !active },
-                        {
-                          onSuccess: () =>
-                            toast.success(t("drivers.statusSaved")),
-                          onError: () => toast.error(t("drivers.statusError")),
-                        },
-                      )
-                    }
-                  >
-                    {active ? t("drivers.suspend") : t("drivers.activate")}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <Button
+                      variant="outline"
+                      className="mt-5 w-full rounded-full"
+                      disabled={status.isPending}
+                      onClick={() =>
+                        status.mutate(
+                          { id: user.id, isActive: !active },
+                          {
+                            onSuccess: () =>
+                              toast.success(t("drivers.statusSaved")),
+                            onError: () =>
+                              toast.error(t("drivers.statusError")),
+                          },
+                        )
+                      }
+                    >
+                      {active ? t("drivers.suspend") : t("drivers.activate")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          {data && data.pagination.totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between rounded-full border bg-card px-4 py-2">
+              <span className="text-sm text-muted-foreground">
+                {data.drivers.length} / {data.pagination.total}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  disabled={page <= 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                >
+                  <ChevronLeft className="size-4 rtl:rotate-180" />
+                </Button>
+                <span className="min-w-16 text-center text-sm">
+                  {data.pagination.page} / {data.pagination.totalPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  disabled={page >= data.pagination.totalPages}
+                  onClick={() => setPage((value) => value + 1)}
+                >
+                  <ChevronRight className="size-4 rtl:rotate-180" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { usePaginationCorrection } from "@/hooks/use-pagination-correction";
 import type { UserRole } from "@/types/auth";
 import { useAdminUsers } from "../use-admin-users";
 import { UserStatusDialog } from "./user-status-dialog";
@@ -60,6 +61,7 @@ export function UsersManagement() {
     search: deferredSearch || undefined,
     role: role === "ALL" ? undefined : role,
   });
+  usePaginationCorrection(page, data?.pagination.totalPages, setPage);
 
   function handleSearchChange(event: React.ChangeEvent<HTMLInputElement>) {
     setSearch(event.target.value);

@@ -111,7 +111,8 @@ export class OrdersService {
   private buildOrderFilters(
     orderQueryDto: OrderQueryDto,
   ): Prisma.OrderWhereInput {
-    const { status, paymentStatus, search, fromDate, toDate } = orderQueryDto;
+    const { active, status, paymentStatus, search, fromDate, toDate } =
+      orderQueryDto;
 
     const startDate = fromDate ? new Date(fromDate) : undefined;
     const endDate = toDate ? new Date(toDate) : undefined;
@@ -127,7 +128,17 @@ export class OrdersService {
     const cleanSearch = search?.trim();
 
     return {
-      ...(status && { status }),
+      ...(active
+        ? {
+            status: {
+              in: [
+                OrderStatus.ACCEPTED,
+                OrderStatus.PICKED_UP,
+                OrderStatus.OUT_FOR_DELIVERY,
+              ],
+            },
+          }
+        : status && { status }),
       ...(paymentStatus && { paymentStatus }),
 
       ...(cleanSearch && {
@@ -357,9 +368,7 @@ export class OrdersService {
       ]);
 
     const productsTotal = Number(deliveredFinancials._sum.totalPrice ?? 0);
-    const commission = Number(
-      deliveredFinancials._sum.shopCommission ?? 0,
-    );
+    const commission = Number(deliveredFinancials._sum.shopCommission ?? 0);
 
     return {
       message: 'Shop owner dashboard retrieved successfully',
@@ -512,24 +521,36 @@ export class OrdersService {
       OrderStatus.OUT_FOR_DELIVERY,
     ];
 
-    const [activeDrivers, totalOrders, pendingOrders, activeOrders, delivered, recentOrders] =
-      await Promise.all([
-        this.prisma.driver.count({ where: { companyId: user.id, user: { isActive: true } } }),
-        this.prisma.order.count({ where: { deliveryCompanyId: user.id } }),
-        this.prisma.order.count({ where: { deliveryCompanyId: user.id, status: OrderStatus.PENDING } }),
-        this.prisma.order.count({ where: { deliveryCompanyId: user.id, status: { in: activeStatuses } } }),
-        this.prisma.order.aggregate({
-          where: { deliveryCompanyId: user.id, status: OrderStatus.DELIVERED },
-          _count: { id: true },
-          _sum: { deliveryFee: true, deliveryCompanyCommission: true },
-        }),
-        this.prisma.order.findMany({
-          where: { deliveryCompanyId: user.id },
-          include: orderInclude,
-          orderBy: { createdAt: 'desc' },
-          take: 6,
-        }),
-      ]);
+    const [
+      activeDrivers,
+      totalOrders,
+      pendingOrders,
+      activeOrders,
+      delivered,
+      recentOrders,
+    ] = await Promise.all([
+      this.prisma.driver.count({
+        where: { companyId: user.id, user: { isActive: true } },
+      }),
+      this.prisma.order.count({ where: { deliveryCompanyId: user.id } }),
+      this.prisma.order.count({
+        where: { deliveryCompanyId: user.id, status: OrderStatus.PENDING },
+      }),
+      this.prisma.order.count({
+        where: { deliveryCompanyId: user.id, status: { in: activeStatuses } },
+      }),
+      this.prisma.order.aggregate({
+        where: { deliveryCompanyId: user.id, status: OrderStatus.DELIVERED },
+        _count: { id: true },
+        _sum: { deliveryFee: true, deliveryCompanyCommission: true },
+      }),
+      this.prisma.order.findMany({
+        where: { deliveryCompanyId: user.id },
+        include: orderInclude,
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      }),
+    ]);
 
     const grossFees = Number(delivered._sum.deliveryFee ?? 0);
     const commission = Number(delivered._sum.deliveryCompanyCommission ?? 0);
@@ -792,9 +813,7 @@ export class OrdersService {
       activeOrders,
       deliveredToday,
       failedOrders,
-      cashCollectedToday: Number(
-        collected._sum.customerTotal ?? 0,
-      ).toFixed(3),
+      cashCollectedToday: Number(collected._sum.customerTotal ?? 0).toFixed(3),
       nextOrders: nextOrders.map(({ pickupCode, ...order }) => order),
     };
   }
