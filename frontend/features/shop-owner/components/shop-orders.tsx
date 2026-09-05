@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from "lucide-r
 import { Badge } from "@/components/ui/badge"; import { Button } from "@/components/ui/button"; import { Card, CardContent } from "@/components/ui/card"; import { Input } from "@/components/ui/input"; import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; import { Skeleton } from "@/components/ui/skeleton";
 import type { OrderStatus, PaymentStatus } from "@/features/admin/orders.types";
 import { useShopOrders } from "../use-shop-owner";
-const statuses: OrderStatus[] = ["PENDING", "ACCEPTED", "PICKED_UP", "OUT_FOR_DELIVERY", "DELIVERED", "FAILED", "RETURNED", "CANCELLED"];
+const statuses: OrderStatus[] = ["PENDING", "ACCEPTED", "PICKED_UP", "OUT_FOR_DELIVERY", "DELIVERED", "FAILED", "RETURNED", "CANCELLED", "REJECTED"];
 const payments: PaymentStatus[] = ["PENDING", "COLLECTED", "PAID_TO_SHOP", "NOT_COLLECTED"];
 
 export function ShopOrders() {

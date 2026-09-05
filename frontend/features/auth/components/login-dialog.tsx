@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -26,6 +26,7 @@ import type { AuthUser, UserRole } from "@/types/auth";
 
 import { getCurrentUser, login } from "../auth-api";
 import { loginSchema, type LoginFormValues } from "../login-schema";
+import { authQueryKey } from "../use-current-user";
 
 const dashboardRoutes: Record<UserRole, string> = {
   ADMIN: "/admin",
@@ -61,6 +62,7 @@ export function LoginDialog({
 }: LoginDialogProps) {
   const t = useTranslations("Auth");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -83,6 +85,7 @@ export function LoginDialog({
       return getCurrentUser();
     },
     onSuccess: (user) => {
+      queryClient.setQueryData(authQueryKey, user);
       toast.success(t("success"));
       setOpen(false);
       reset();

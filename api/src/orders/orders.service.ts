@@ -14,6 +14,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { FailOrderDto } from './dto/fail-order.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
+import { RejectOrderDto } from './dto/reject-order.dto';
 
 const COMMISSION_RATE = 0.025;
 
@@ -501,6 +502,50 @@ export class OrdersService {
     };
   }
 
+  async getDeliveryCompanyDashboard(user: JwtUser) {
+    this.ensureDeliveryCompany(user);
+
+    const activeStatuses = [
+      OrderStatus.PENDING,
+      OrderStatus.ACCEPTED,
+      OrderStatus.PICKED_UP,
+      OrderStatus.OUT_FOR_DELIVERY,
+    ];
+
+    const [activeDrivers, totalOrders, pendingOrders, activeOrders, delivered, recentOrders] =
+      await Promise.all([
+        this.prisma.driver.count({ where: { companyId: user.id, user: { isActive: true } } }),
+        this.prisma.order.count({ where: { deliveryCompanyId: user.id } }),
+        this.prisma.order.count({ where: { deliveryCompanyId: user.id, status: OrderStatus.PENDING } }),
+        this.prisma.order.count({ where: { deliveryCompanyId: user.id, status: { in: activeStatuses } } }),
+        this.prisma.order.aggregate({
+          where: { deliveryCompanyId: user.id, status: OrderStatus.DELIVERED },
+          _count: { id: true },
+          _sum: { deliveryFee: true, deliveryCompanyCommission: true },
+        }),
+        this.prisma.order.findMany({
+          where: { deliveryCompanyId: user.id },
+          include: orderInclude,
+          orderBy: { createdAt: 'desc' },
+          take: 6,
+        }),
+      ]);
+
+    const grossFees = Number(delivered._sum.deliveryFee ?? 0);
+    const commission = Number(delivered._sum.deliveryCompanyCommission ?? 0);
+
+    return {
+      message: 'Delivery company dashboard retrieved successfully',
+      activeDrivers,
+      totalOrders,
+      pendingOrders,
+      activeOrders,
+      deliveredOrders: delivered._count.id,
+      netEarnings: (grossFees - commission).toFixed(3),
+      recentOrders: recentOrders.map(({ pickupCode, ...order }) => order),
+    };
+  }
+
   // Accept an order assigned to the company
   async acceptOrder(user: JwtUser, orderId: string) {
     this.ensureDeliveryCompany(user);
@@ -536,6 +581,35 @@ export class OrdersService {
       message: 'Order accepted successfully',
       order: safeOrder,
     };
+  }
+
+  async rejectOrder(user: JwtUser, orderId: string, dto: RejectOrderDto) {
+    this.ensureDeliveryCompany(user);
+
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, deliveryCompanyId: user.id },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Only pending orders can be rejected');
+    }
+
+    const rejectedOrder = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.REJECTED,
+        paymentStatus: PaymentStatus.NOT_COLLECTED,
+        rejectionReason: dto.reason.trim(),
+      },
+      include: orderInclude,
+    });
+
+    const { pickupCode, ...safeOrder } = rejectedOrder;
+    return { message: 'Order rejected successfully', order: safeOrder };
   }
 
   // Assign one of the company's drivers
@@ -668,6 +742,60 @@ export class OrdersService {
         total,
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async getDriverDashboard(user: JwtUser) {
+    this.ensureDriver(user);
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const activeStatuses = [
+      OrderStatus.ACCEPTED,
+      OrderStatus.PICKED_UP,
+      OrderStatus.OUT_FOR_DELIVERY,
+    ];
+
+    const [activeOrders, deliveredToday, failedOrders, collected, nextOrders] =
+      await Promise.all([
+        this.prisma.order.count({
+          where: { driverId: user.id, status: { in: activeStatuses } },
+        }),
+        this.prisma.order.count({
+          where: {
+            driverId: user.id,
+            status: OrderStatus.DELIVERED,
+            updatedAt: { gte: startOfDay },
+          },
+        }),
+        this.prisma.order.count({
+          where: { driverId: user.id, status: OrderStatus.FAILED },
+        }),
+        this.prisma.order.aggregate({
+          where: {
+            driverId: user.id,
+            status: OrderStatus.DELIVERED,
+            updatedAt: { gte: startOfDay },
+          },
+          _sum: { customerTotal: true },
+        }),
+        this.prisma.order.findMany({
+          where: { driverId: user.id, status: { in: activeStatuses } },
+          include: orderInclude,
+          orderBy: { createdAt: 'asc' },
+          take: 5,
+        }),
+      ]);
+
+    return {
+      message: 'Driver dashboard retrieved successfully',
+      activeOrders,
+      deliveredToday,
+      failedOrders,
+      cashCollectedToday: Number(
+        collected._sum.customerTotal ?? 0,
+      ).toFixed(3),
+      nextOrders: nextOrders.map(({ pickupCode, ...order }) => order),
     };
   }
 
@@ -828,9 +956,24 @@ export class OrdersService {
 
   // Confirm payment received by the shop
   async confirmPayment(user: JwtUser, orderId: string) {
-    this.ensureShopOwner(user);
+    if (user.role !== Role.SHOP_OWNER && user.role !== Role.DELIVERY_COMPANY) {
+      throw new ForbiddenException(
+        'Only the shop or assigned delivery company can confirm payment',
+      );
+    }
 
-    const order = await this.findOwnedOrder(user.id, orderId);
+    const order = await this.prisma.order.findFirst({
+      where: {
+        id: orderId,
+        ...(user.role === Role.SHOP_OWNER
+          ? { shopOwnerId: user.id }
+          : { deliveryCompanyId: user.id }),
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
 
     if (order.status !== OrderStatus.DELIVERED) {
       throw new BadRequestException(

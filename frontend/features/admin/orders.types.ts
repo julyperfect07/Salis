@@ -6,7 +6,8 @@ export type OrderStatus =
   | "DELIVERED"
   | "FAILED"
   | "RETURNED"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "REJECTED";
 
 export type PaymentStatus =
   | "PENDING"
@@ -39,6 +40,7 @@ export interface AdminOrder {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   returnReason: string | null;
+  rejectionReason: string | null;
   createdAt: string;
   updatedAt: string;
   shopOwner: OrderParty;

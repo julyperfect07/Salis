@@ -34,12 +34,14 @@ import { useRouter } from "@/i18n/navigation";
 import { logout } from "@/features/auth/auth-api";
 import { authQueryKey, useCurrentUser } from "@/features/auth/use-current-user";
 import type { UserRole } from "@/types/auth";
+import { cn } from "@/lib/utils";
 
 interface DashboardShellProps {
   children: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
+  contentClassName?: string;
 }
 
 interface NavigationItem {
@@ -75,6 +77,7 @@ export function DashboardShell({
   title,
   description,
   action,
+  contentClassName,
 }: DashboardShellProps) {
   const locale = useLocale();
   const t = useTranslations("DashboardShell");
@@ -258,6 +261,7 @@ export function DashboardShell({
         </header>
 
         <main className="px-4 pb-28 pt-8 sm:px-7 lg:px-12">
+          <div className={cn("mx-auto max-w-7xl", contentClassName)}>
           <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div>
               <p className="mb-2 text-sm font-medium text-primary">
@@ -286,6 +290,7 @@ export function DashboardShell({
           </section>
 
           {children}
+          </div>
         </main>
       </div>
 

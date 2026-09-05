@@ -19,6 +19,7 @@ import { OrdersService } from './orders.service';
 import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
 import { FailOrderDto } from './dto/fail-order.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
+import { RejectOrderDto } from './dto/reject-order.dto';
 
 @Controller('orders')
 @UseGuards(JwtGuard)
@@ -58,6 +59,18 @@ export class OrdersController {
     return this.ordersService.getShopOwnerDashboard(user);
   }
 
+  // Get accurate operational and financial data for a delivery company
+  @Get('delivery-company/dashboard')
+  getDeliveryCompanyDashboard(@CurrentUser() user: JwtUser) {
+    return this.ordersService.getDeliveryCompanyDashboard(user);
+  }
+
+  // Get the logged-in driver's focused workload summary
+  @Get('driver/dashboard')
+  getDriverDashboard(@CurrentUser() user: JwtUser) {
+    return this.ordersService.getDriverDashboard(user);
+  }
+
   // Get one order by its ID
   @Get(':id')
   getOrderById(
@@ -74,6 +87,16 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.ordersService.acceptOrder(user, id);
+  }
+
+  // Reject an assigned order before it is accepted
+  @Patch(':id/reject')
+  rejectOrder(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RejectOrderDto,
+  ) {
+    return this.ordersService.rejectOrder(user, id, dto);
   }
 
   // Assign a company driver to an accepted order

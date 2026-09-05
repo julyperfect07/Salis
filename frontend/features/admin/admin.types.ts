@@ -26,6 +26,7 @@ export interface AdminDashboardResponse {
       FAILED: number;
       RETURNED: number;
       CANCELLED: number;
+      REJECTED: number;
     };
   };
 

@@ -64,7 +64,7 @@ export function LandingFooter() {
             <h2
               className={
                 isArabic
-                  ? "mt-4 max-w-3xl text-3xl font-extrabold leading-[1.5] sm:text-4xl"
+                  ? "mt-4 max-w-3xl text-3xl font-extrabold leading-normal sm:text-4xl"
                   : "mt-4 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-[-0.045em] sm:text-5xl"
               }
             >

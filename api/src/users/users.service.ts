@@ -15,6 +15,8 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateDeliveryCompanyProfileDto } from './dto/update-delivery-company-profile.dto';
+import { CreateDriverDto } from './dto/create-driver.dto';
+import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
 
 @Injectable()
 export class UsersService {
@@ -150,6 +152,7 @@ export class UsersService {
               phoneNumber: true,
               imageUrl: true,
               role: true,
+              isActive: true,
             },
           },
         },
@@ -170,6 +173,76 @@ export class UsersService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async createCompanyDriver(user: JwtUser, dto: CreateDriverDto) {
+    if (user.role !== Role.DELIVERY_COMPANY) {
+      throw new ForbiddenException('Only delivery companies can create drivers');
+    }
+
+    const email = dto.email.toLowerCase().trim();
+    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+
+    if (existingUser) {
+      throw new ConflictException('Email is already in use');
+    }
+
+    const password = await bcrypt.hash(dto.password, 10);
+    const driver = await this.prisma.user.create({
+      data: {
+        name: dto.name.trim(),
+        email,
+        password,
+        phoneNumber: dto.phoneNumber.trim(),
+        role: Role.DRIVER,
+        driver: { create: { companyId: user.id } },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phoneNumber: true,
+        imageUrl: true,
+        role: true,
+        isActive: true,
+      },
+    });
+
+    return { message: 'Driver created successfully', driver };
+  }
+
+  async updateCompanyDriverStatus(
+    user: JwtUser,
+    driverId: string,
+    dto: UpdateDriverStatusDto,
+  ) {
+    if (user.role !== Role.DELIVERY_COMPANY) {
+      throw new ForbiddenException('Only delivery companies can manage drivers');
+    }
+
+    const driver = await this.prisma.driver.findFirst({
+      where: { userId: driverId, companyId: user.id },
+    });
+
+    if (!driver) {
+      throw new NotFoundException('Driver not found');
+    }
+
+    const updatedDriver = await this.prisma.user.update({
+      where: { id: driverId },
+      data: { isActive: dto.isActive },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phoneNumber: true,
+        imageUrl: true,
+        role: true,
+        isActive: true,
+      },
+    });
+
+    return { message: 'Driver status updated successfully', driver: updatedDriver };
   }
 
   // Get the logged-in user's profile without sensitive fields

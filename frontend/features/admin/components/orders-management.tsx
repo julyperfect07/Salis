@@ -25,6 +25,7 @@ const orderStatuses: OrderStatus[] = [
   "FAILED",
   "RETURNED",
   "CANCELLED",
+  "REJECTED",
 ];
 
 const paymentStatuses: PaymentStatus[] = [
@@ -43,6 +44,7 @@ const statusStyles: Record<OrderStatus, string> = {
   FAILED: "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400",
   RETURNED: "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950/40 dark:text-orange-400",
   CANCELLED: "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400",
+  REJECTED: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400",
 };
 
 export function OrdersManagement() {

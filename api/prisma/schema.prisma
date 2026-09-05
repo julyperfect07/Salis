@@ -31,6 +31,7 @@ enum OrderStatus {
   FAILED
   RETURNED
   CANCELLED
+  REJECTED
 }
 
 enum PaymentStatus {
@@ -138,6 +139,7 @@ model Order {
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
   returnReason  String?
+  rejectionReason String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt

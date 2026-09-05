@@ -30,7 +30,7 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     if (isLoading) return;
 
     if (isError || !user) {
-      router.replace("/?login=true");
+      router.replace("/");
       return;
     }
 

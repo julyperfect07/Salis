@@ -7,6 +7,8 @@ import {
   Post,
   Query,
   UseGuards,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { Role } from '../../generated/prisma/enums';
 import { CurrentUser } from '../common/decorators/currentuser.decorator';
@@ -19,6 +21,8 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateDeliveryCompanyProfileDto } from './dto/update-delivery-company-profile.dto';
+import { CreateDriverDto } from './dto/create-driver.dto';
+import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
 
 @Controller('users')
 export class UsersController {
@@ -41,6 +45,27 @@ export class UsersController {
     @Query() paginationDto: PaginationDto,
   ) {
     return this.usersService.getCompanyDrivers(user, paginationDto);
+  }
+
+  // Create a driver inside the logged-in delivery company
+  @Post('drivers')
+  @UseGuards(JwtGuard)
+  createCompanyDriver(
+    @CurrentUser() user: JwtUser,
+    @Body() dto: CreateDriverDto,
+  ) {
+    return this.usersService.createCompanyDriver(user, dto);
+  }
+
+  // Activate or suspend one of the company's drivers
+  @Patch('drivers/:id/status')
+  @UseGuards(JwtGuard)
+  updateCompanyDriverStatus(
+    @CurrentUser() user: JwtUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateDriverStatusDto,
+  ) {
+    return this.usersService.updateCompanyDriverStatus(user, id, dto);
   }
 
   // Get the logged-in user's full profile
