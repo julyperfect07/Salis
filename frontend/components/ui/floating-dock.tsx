@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AnimatePresence,
@@ -75,24 +76,29 @@ function FloatingDockMobile({
             {items.map((item, index) => {
               const active = isActiveRoute(pathname, item.href);
               return (
-                <motion.a
+                <Link
                   key={item.href}
                   href={item.href}
                   aria-label={item.title}
                   aria-current={active ? "page" : undefined}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.04 }}
+                  onClick={() => setOpen(false)}
                   className={cn(
                     "relative flex size-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                     active && "bg-primary/10 text-primary",
                   )}
                 >
-                  {active && (
-                    <span className="absolute left-0 h-5 w-1 rounded-full bg-primary" />
-                  )}
-                  <span className="size-5">{item.icon}</span>
-                </motion.a>
+                  <motion.span
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.04 }}
+                    className="flex size-full items-center justify-center"
+                  >
+                    {active && (
+                      <span className="absolute left-0 h-5 w-1 rounded-full bg-primary" />
+                    )}
+                    <span className="size-5">{item.icon}</span>
+                  </motion.span>
+                </Link>
               );
             })}
           </motion.nav>
@@ -167,7 +173,7 @@ function IconContainer({
   );
 
   return (
-    <a
+    <Link
       href={href}
       aria-label={title}
       aria-current={active ? "page" : undefined}
@@ -207,6 +213,6 @@ function IconContainer({
           {icon}
         </motion.span>
       </motion.div>
-    </a>
+    </Link>
   );
 }

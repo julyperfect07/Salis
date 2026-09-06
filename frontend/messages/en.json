@@ -112,6 +112,7 @@
     "list": {
       "title": "Platform users",
       "description": "Search, review, and manage every account.",
+      "loading": "Updating users...",
       "searchPlaceholder": "Search name or email...",
       "allRoles": "All roles",
       "active": "Active",
@@ -218,7 +219,8 @@
     },
     "list": {
       "title": "Platform orders",
-      "description": "Search and filter orders across all shops and delivery companies."
+      "description": "Search and filter orders across all shops and delivery companies.",
+      "loading": "Updating orders..."
     },
     "filters": {
       "search": "Search order, customer, or phone...",
@@ -499,6 +501,8 @@
       "confirmReject": "Reject order",
       "rejecting": "Rejecting...",
       "rejected": "Order rejected",
+      "rerouted": "Order rerouted to another delivery company",
+      "rejectedNoAlternative": "Order rejected; no other delivery company is available",
       "rejectionReason": "Rejection reason",
       "confirmPayment": "Confirm shop payment",
       "paymentConfirmed": "Payment confirmed",

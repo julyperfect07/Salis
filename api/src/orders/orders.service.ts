@@ -607,30 +607,80 @@ export class OrdersService {
   async rejectOrder(user: JwtUser, orderId: string, dto: RejectOrderDto) {
     this.ensureDeliveryCompany(user);
 
-    const order = await this.prisma.order.findFirst({
-      where: { id: orderId, deliveryCompanyId: user.id },
+    return this.prisma.$transaction(async (transaction) => {
+      const order = await transaction.order.findFirst({
+        where: { id: orderId, deliveryCompanyId: user.id },
+      });
+
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException('Only pending orders can be rejected');
+      }
+
+      await transaction.orderRejection.create({
+        data: {
+          orderId,
+          deliveryCompanyId: user.id,
+          reason: dto.reason.trim(),
+        },
+      });
+
+      const nextDeliveryCompany = order.deliveryZone
+        ? await transaction.deliveryCompany.findFirst({
+            where: {
+              coverageZones: {
+                has: order.deliveryZone,
+              },
+              user: {
+                isActive: true,
+              },
+              orderRejections: {
+                none: {
+                  orderId,
+                },
+              },
+            },
+            orderBy: [
+              {
+                deliveryPrice: 'asc',
+              },
+              {
+                userId: 'asc',
+              },
+            ],
+          })
+        : null;
+
+      const updatedOrder = await transaction.order.update({
+        where: { id: orderId },
+        data: {
+          status: nextDeliveryCompany
+            ? OrderStatus.PENDING
+            : OrderStatus.REJECTED,
+          paymentStatus: nextDeliveryCompany
+            ? PaymentStatus.PENDING
+            : PaymentStatus.NOT_COLLECTED,
+          rejectionReason: nextDeliveryCompany ? null : dto.reason.trim(),
+          deliveryCompany: nextDeliveryCompany
+            ? { connect: { userId: nextDeliveryCompany.userId } }
+            : { disconnect: true },
+        },
+        include: orderInclude,
+      });
+
+      const { pickupCode, ...safeOrder } = updatedOrder;
+
+      return {
+        message: nextDeliveryCompany
+          ? 'Order rerouted to another delivery company successfully'
+          : 'Order rejected; no other delivery company is available',
+        rerouted: Boolean(nextDeliveryCompany),
+        order: safeOrder,
+      };
     });
-
-    if (!order) {
-      throw new NotFoundException('Order not found');
-    }
-
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Only pending orders can be rejected');
-    }
-
-    const rejectedOrder = await this.prisma.order.update({
-      where: { id: orderId },
-      data: {
-        status: OrderStatus.REJECTED,
-        paymentStatus: PaymentStatus.NOT_COLLECTED,
-        rejectionReason: dto.reason.trim(),
-      },
-      include: orderInclude,
-    });
-
-    const { pickupCode, ...safeOrder } = rejectedOrder;
-    return { message: 'Order rejected successfully', order: safeOrder };
   }
 
   // Assign one of the company's drivers

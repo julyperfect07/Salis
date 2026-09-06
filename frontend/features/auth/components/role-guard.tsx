@@ -41,7 +41,7 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
 
   if (isLoading || !isAllowed) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-primary">
           <LoaderCircle className="size-7 animate-spin" />
 

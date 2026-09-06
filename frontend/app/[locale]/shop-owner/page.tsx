@@ -1,2 +1,15 @@
-import { getTranslations } from "next-intl/server"; import { DashboardShell } from "@/components/layout/dashboard-shell"; import { ShopOwnerDashboard } from "@/features/shop-owner/components/shop-owner-dashboard";
-export default async function ShopOwnerPage() { const t = await getTranslations("ShopOwner"); return <DashboardShell title={t("dashboard.pageTitle")} description={t("dashboard.pageDescription")} contentClassName="max-w-6xl"><ShopOwnerDashboard /></DashboardShell>; }
+import { getTranslations } from "next-intl/server";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { ShopOwnerDashboard } from "@/features/shop-owner/components/shop-owner-dashboard";
+export default async function ShopOwnerPage() {
+  const t = await getTranslations("ShopOwner");
+  return (
+    <DashboardShell
+      title={t("dashboard.pageTitle")}
+      description={t("dashboard.pageDescription")}
+      contentClassName="max-w-6xl"
+    >
+      <ShopOwnerDashboard />
+    </DashboardShell>
+  );
+}

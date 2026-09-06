@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,6 +45,10 @@ interface DashboardShellProps {
   contentClassName?: string;
 }
 
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
+
 interface NavigationItem {
   title: string;
   href: string;
@@ -59,6 +64,13 @@ const roleRoutes: Record<UserRole, string> = {
   DRIVER: "/driver",
 };
 
+const segmentRoles: Partial<Record<string, UserRole>> = {
+  admin: "ADMIN",
+  "shop-owner": "SHOP_OWNER",
+  "delivery-company": "DELIVERY_COMPANY",
+  driver: "DRIVER",
+};
+
 function getInitials(name?: string) {
   if (!name) {
     return "S";
@@ -72,97 +84,87 @@ function getInitials(name?: string) {
     .toUpperCase();
 }
 
-export function DashboardShell({
-  children,
-  title,
-  description,
-  action,
-  contentClassName,
-}: DashboardShellProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   const locale = useLocale();
   const t = useTranslations("DashboardShell");
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
+  const routeSegment = pathname.split("/").filter(Boolean)[1];
+  const navigationRole = user?.role ?? segmentRoles[routeSegment];
 
-  const isArabic = locale === "ar";
+  const navigationItems: NavigationItem[] = [
+    ...(navigationRole
+      ? [
+          {
+            title: t("navigation.dashboard"),
+            href: `/${locale}${roleRoutes[navigationRole]}`,
+            icon: <LayoutDashboard className={iconClassName} />,
+          },
 
-  const navigationItems: NavigationItem[] = user
-    ? [
-        {
-          title: t("navigation.dashboard"),
-          href: `/${locale}${roleRoutes[user.role]}`,
-          icon: <LayoutDashboard className={iconClassName} />,
-        },
+          ...(navigationRole === "ADMIN"
+            ? [
+                {
+                  title: t("navigation.users"),
+                  href: `/${locale}/admin/users`,
+                  icon: <Users className={iconClassName} />,
+                },
+                {
+                  title: t("navigation.orders"),
+                  href: `/${locale}/admin/orders`,
+                  icon: <ClipboardList className={iconClassName} />,
+                },
+              ]
+            : []),
 
-        ...(user.role === "ADMIN"
-          ? [
-              {
-                title: t("navigation.users"),
-                href: `/${locale}/admin/users`,
-                icon: <Users className={iconClassName} />,
-              },
-              {
-                title: t("navigation.orders"),
-                href: `/${locale}/admin/orders`,
-                icon: <ClipboardList className={iconClassName} />,
-              },
-            ]
-          : []),
+          ...(navigationRole === "SHOP_OWNER"
+            ? [
+                {
+                  title: t("navigation.products"),
+                  href: `/${locale}/shop-owner/products`,
+                  icon: <Boxes className={iconClassName} />,
+                },
+                {
+                  title: t("navigation.orders"),
+                  href: `/${locale}/shop-owner/orders`,
+                  icon: <ClipboardList className={iconClassName} />,
+                },
+              ]
+            : []),
 
-        ...(user.role === "SHOP_OWNER"
-          ? [
-              {
-                title: t("navigation.products"),
-                href: `/${locale}/shop-owner/products`,
-                icon: <Boxes className={iconClassName} />,
-              },
-              {
-                title: t("navigation.orders"),
-                href: `/${locale}/shop-owner/orders`,
-                icon: <ClipboardList className={iconClassName} />,
-              },
-            ]
-          : []),
+          ...(navigationRole === "DELIVERY_COMPANY"
+            ? [
+                {
+                  title: t("navigation.orders"),
+                  href: `/${locale}/delivery-company/orders`,
+                  icon: <PackageCheck className={iconClassName} />,
+                },
+                {
+                  title: t("navigation.drivers"),
+                  href: `/${locale}/delivery-company/drivers`,
+                  icon: <Truck className={iconClassName} />,
+                },
+              ]
+            : []),
 
-        ...(user.role === "DELIVERY_COMPANY"
-          ? [
-              {
-                title: t("navigation.orders"),
-                href: `/${locale}/delivery-company/orders`,
-                icon: <PackageCheck className={iconClassName} />,
-              },
-              {
-                title: t("navigation.drivers"),
-                href: `/${locale}/delivery-company/drivers`,
-                icon: <Truck className={iconClassName} />,
-              },
-            ]
-          : []),
-
-        ...(user.role === "DRIVER"
-          ? [
-              {
-                title: t("navigation.myOrders"),
-                href: `/${locale}/driver/orders`,
-                icon: <ClipboardList className={iconClassName} />,
-              },
-            ]
-          : []),
-
-        {
-          title: t("navigation.profile"),
-          href: `/${locale}/profile`,
-          icon: <UserRound className={iconClassName} />,
-        },
-      ]
-    : [];
-
-  const formattedDate = new Intl.DateTimeFormat(isArabic ? "ar-JO" : "en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date());
+          ...(navigationRole === "DRIVER"
+            ? [
+                {
+                  title: t("navigation.myOrders"),
+                  href: `/${locale}/driver/orders`,
+                  icon: <ClipboardList className={iconClassName} />,
+                },
+              ]
+            : []),
+        ]
+      : []),
+    {
+      title: t("navigation.profile"),
+      href: `/${locale}/profile`,
+      icon: <UserRound className={iconClassName} />,
+    },
+  ];
 
   async function handleLogout() {
     await logout();
@@ -178,7 +180,11 @@ export function DashboardShell({
         <header className="px-3 pt-3 sm:px-5 sm:pt-5">
           <div className="mx-auto flex min-h-14 max-w-7xl items-center justify-between gap-3 rounded-2xl border border-white/80 bg-white/90 px-3 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#202420]/90 sm:px-4">
             <Link
-              href={user ? `/${locale}${roleRoutes[user.role]}` : `/${locale}`}
+              href={
+                navigationRole
+                  ? `/${locale}${roleRoutes[navigationRole]}`
+                  : `/${locale}`
+              }
               className="group flex shrink-0 items-center gap-2.5"
             >
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform duration-200 group-hover:scale-105">
@@ -264,47 +270,69 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="px-4 pb-28 pt-8 sm:px-7 md:pl-24 lg:pr-12 lg:pl-28">
-          <div className={cn("mx-auto max-w-7xl", contentClassName)}>
-            <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-              <div>
-                <p className="mb-2 text-sm font-medium text-primary">
-                  {t("welcome")} {user?.name?.split(" ")[0] ?? ""}
-                </p>
-
-                <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-                  {title}
-                </h1>
-
-                {description && (
-                  <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-                    {description}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex h-10 items-center gap-2 rounded-full border bg-background px-4 text-sm shadow-sm">
-                  <CalendarDays className="size-4 text-muted-foreground" />
-                  <span>{formattedDate}</span>
-                </div>
-
-                {action}
-              </div>
-            </section>
-
-            {children}
-          </div>
+        <main className="px-4 pb-28 pt-8 sm:px-7 md:px-24 lg:px-24">
+          {children}
         </main>
       </div>
 
-      {navigationItems.length > 0 && (
-        <FloatingDock
-          items={navigationItems}
-          desktopClassName="fixed left-5 top-1/2 z-50 -translate-y-1/2 border border-border bg-background/90 shadow-xl backdrop-blur-xl dark:bg-card/90"
-          mobileClassName="fixed bottom-5 left-5 z-50"
-        />
-      )}
+      <FloatingDock
+        items={navigationItems}
+        desktopClassName="fixed left-5 top-1/2 z-50 -translate-y-1/2 border border-border bg-background/90 shadow-xl backdrop-blur-xl dark:bg-card/90"
+        mobileClassName="fixed bottom-5 left-5 z-50"
+      />
+    </div>
+  );
+}
+
+export function DashboardShell({
+  children,
+  title,
+  description,
+  action,
+  contentClassName,
+}: DashboardShellProps) {
+  const locale = useLocale();
+  const t = useTranslations("DashboardShell");
+  const { data: user } = useCurrentUser();
+  const formattedDate = new Intl.DateTimeFormat(
+    locale === "ar" ? "ar-JO" : "en-GB",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  ).format(new Date());
+
+  return (
+    <div className={cn("mx-auto max-w-7xl", contentClassName)}>
+      <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <div>
+          <p className="mb-2 text-sm font-medium text-primary">
+            {t("welcome")} {user?.name?.split(" ")[0] ?? ""}
+          </p>
+
+          <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
+            {title}
+          </h1>
+
+          {description && (
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex h-10 items-center gap-2 rounded-full border bg-background px-4 text-sm shadow-sm">
+            <CalendarDays className="size-4 text-muted-foreground" />
+            <span>{formattedDate}</span>
+          </div>
+
+          {action}
+        </div>
+      </section>
+
+      {children}
     </div>
   );
 }

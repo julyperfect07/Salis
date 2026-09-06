@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "@/i18n/navigation";
 import {
   useAcceptOrder,
   useAssignDriver,
@@ -45,6 +46,7 @@ import { getGoogleMapsDirectionsUrl } from "@/lib/maps";
 export function CompanyOrderDetails({ orderId }: { orderId: string }) {
   const t = useTranslations("DeliveryCompany");
   const locale = useLocale();
+  const router = useRouter();
   const { data, isLoading, isError, refetch } = useCompanyOrder(orderId);
   const { data: drivers } = useDrivers(1, 100);
   const accept = useAcceptOrder();
@@ -308,10 +310,14 @@ export function CompanyOrderDetails({ orderId }: { orderId: string }) {
                 reject.mutate(
                   { id: order.id, reason: reason.trim() },
                   {
-                    onSuccess: () => {
-                      toast.success(t("details.rejected"));
+                    onSuccess: (response) => {
+                      toast.success(
+                        response.rerouted
+                          ? t("details.rerouted")
+                          : t("details.rejectedNoAlternative"),
+                      );
                       setRejectOpen(false);
-                      refetch();
+                      router.replace("/delivery-company/orders");
                     },
                     onError: () => toast.error(t("details.actionError")),
                   },

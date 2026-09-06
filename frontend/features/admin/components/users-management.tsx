@@ -3,7 +3,13 @@
 import { useDeferredValue, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, Search, UserRound } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  Search,
+  UserRound,
+} from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -55,13 +61,15 @@ export function UsersManagement() {
 
   const deferredSearch = useDeferredValue(search.trim());
 
-  const { data, isLoading, isError, refetch } = useAdminUsers({
+  const { data, isLoading, isFetching, isError, refetch } = useAdminUsers({
     page,
     limit: 10,
     search: deferredSearch || undefined,
     role: role === "ALL" ? undefined : role,
   });
   usePaginationCorrection(page, data?.pagination.totalPages, setPage);
+  const isFiltering =
+    !isLoading && (isFetching || search.trim() !== deferredSearch);
 
   function handleSearchChange(event: React.ChangeEvent<HTMLInputElement>) {
     setSearch(event.target.value);
@@ -86,10 +94,26 @@ export function UsersManagement() {
   }
 
   return (
-    <section className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+    <section
+      className="overflow-hidden rounded-3xl border bg-card shadow-sm"
+      aria-busy={isFiltering}
+    >
       <div className="flex flex-col gap-4 border-b p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{t("list.title")}</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold">{t("list.title")}</h2>
+
+            {isFiltering && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-1.5 text-xs font-medium text-primary"
+              >
+                <LoaderCircle className="size-3.5 animate-spin" />
+                {t("list.loading")}
+              </div>
+            )}
+          </div>
 
           <p className="mt-1 text-sm text-muted-foreground">
             {t("list.description")}
@@ -170,7 +194,12 @@ export function UsersManagement() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div
+            className={cn(
+              "overflow-x-auto transition-opacity duration-200",
+              isFiltering && "opacity-60",
+            )}
+          >
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">

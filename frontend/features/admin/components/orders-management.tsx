@@ -3,7 +3,13 @@
 import { useDeferredValue, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ClipboardList, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LoaderCircle,
+  Search,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,7 +93,7 @@ export function OrdersManagement() {
   const [toDate, setToDate] = useState("");
   const deferredSearch = useDeferredValue(search.trim());
 
-  const { data, isLoading, isError, refetch } = useAdminOrders({
+  const { data, isLoading, isFetching, isError, refetch } = useAdminOrders({
     page,
     limit: 10,
     search: deferredSearch || undefined,
@@ -97,6 +103,8 @@ export function OrdersManagement() {
     toDate: toDate || undefined,
   });
   usePaginationCorrection(page, data?.pagination.totalPages, setPage);
+  const isFiltering =
+    !isLoading && (isFetching || search.trim() !== deferredSearch);
 
   const resetPage = () => setPage(1);
   const formatDate = (value: string) =>
@@ -114,10 +122,26 @@ export function OrdersManagement() {
     }).format(Number(value));
 
   return (
-    <section className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+    <section
+      className="overflow-hidden rounded-3xl border bg-card shadow-sm"
+      aria-busy={isFiltering}
+    >
       <div className="space-y-4 border-b p-4 sm:p-6">
         <div>
-          <h2 className="text-lg font-semibold">{t("list.title")}</h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-lg font-semibold">{t("list.title")}</h2>
+
+            {isFiltering && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-1.5 text-xs font-medium text-primary"
+              >
+                <LoaderCircle className="size-3.5 animate-spin" />
+                {t("list.loading")}
+              </div>
+            )}
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("list.description")}
           </p>
@@ -146,7 +170,7 @@ export function OrdersManagement() {
               }
             }}
           >
-            <SelectTrigger className="h-10 w-full rounded-full">
+            <SelectTrigger className="h-full w-full rounded-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -231,7 +255,12 @@ export function OrdersManagement() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div
+            className={cn(
+              "overflow-x-auto transition-opacity duration-200",
+              isFiltering && "opacity-60",
+            )}
+          >
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">

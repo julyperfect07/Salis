@@ -19,12 +19,13 @@ async function bootstrap() {
   // اذا بدي اضيف اكثر من url
   const frontendUrls = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
     .split(',')
-    .map((url) => url.trim());
+    .map((url) => url.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
 
   app.enableCors({
     origin: frontendUrls,
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 

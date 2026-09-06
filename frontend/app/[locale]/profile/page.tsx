@@ -5,5 +5,9 @@ import { ProfileManagement } from "@/features/profile/components/profile-managem
 
 export default async function ProfilePage() {
   const t = await getTranslations("Profile");
-  return <DashboardShell title={t("page.title")} description={t("page.description")}><ProfileManagement /></DashboardShell>;
+  return (
+    <DashboardShell title={t("page.title")} description={t("page.description")}>
+      <ProfileManagement />
+    </DashboardShell>
+  );
 }

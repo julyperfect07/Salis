@@ -8,6 +8,10 @@ import type {
   DriversResponse,
 } from "./delivery-company.types";
 
+export interface RejectOrderResponse extends AdminOrderResponse {
+  rerouted: boolean;
+}
+
 export async function getCompanyDashboard() {
   return (
     await api.get<CompanyDashboardResponse>(
@@ -32,7 +36,7 @@ export async function acceptOrder(id: string) {
 
 export async function rejectOrder(id: string, reason: string) {
   return (
-    await api.patch<AdminOrderResponse>(`/orders/${id}/reject`, { reason })
+    await api.patch<RejectOrderResponse>(`/orders/${id}/reject`, { reason })
   ).data;
 }
 

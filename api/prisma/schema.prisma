@@ -79,9 +79,10 @@ model DeliveryCompany {
   closeTime     String
   coverageZones DeliveryZone[] @default([])
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  drivers Driver[]
-  orders  Order[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drivers         Driver[]
+  orders          Order[]
+  orderRejections OrderRejection[]
 }
 
 model Driver {
@@ -150,12 +151,28 @@ model Order {
   deliveryCompany DeliveryCompany? @relation(fields: [deliveryCompanyId], references: [userId])
   driver          Driver?          @relation(fields: [driverId], references: [userId])
   orderItems      OrderItem[]
+  rejections      OrderRejection[]
 
   @@index([shopOwnerId, status])
   @@index([deliveryCompanyId, status])
   @@index([driverId, status])
   @@index([paymentStatus])
   @@index([createdAt])
+}
+
+model OrderRejection {
+  id                String   @id @default(uuid())
+  orderId           String
+  deliveryCompanyId String
+  reason            String
+  createdAt         DateTime @default(now())
+
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  deliveryCompany DeliveryCompany @relation(fields: [deliveryCompanyId], references: [userId])
+
+  @@unique([orderId, deliveryCompanyId])
+  @@index([deliveryCompanyId])
+  @@index([orderId, createdAt])
 }
 
 model OrderItem {

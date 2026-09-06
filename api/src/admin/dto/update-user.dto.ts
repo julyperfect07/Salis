@@ -11,7 +11,10 @@ import {
 export class UpdateUserDto {
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[0-9]{7,20}$/)
+  @Matches(/^[\p{L}\p{N}]+(?:[ '\-][\p{L}\p{N}]+)*$/u, {
+    message:
+      'Name can contain only letters, numbers, spaces, apostrophes, and hyphens',
+  })
   @MinLength(2)
   @MaxLength(100)
   name?: string;
