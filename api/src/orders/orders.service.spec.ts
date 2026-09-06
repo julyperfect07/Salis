@@ -17,7 +17,7 @@ describe('OrdersService', () => {
       create: jest.Mock;
     };
     deliveryCompany: {
-      findFirst: jest.Mock;
+      findMany: jest.Mock;
     };
   };
 
@@ -31,7 +31,7 @@ describe('OrdersService', () => {
         create: jest.fn(),
       },
       deliveryCompany: {
-        findFirst: jest.fn(),
+        findMany: jest.fn(),
       },
     };
 
@@ -60,12 +60,34 @@ describe('OrdersService', () => {
       status: OrderStatus.PENDING,
     };
 
-    it('reroutes a pending order to the cheapest eligible company', async () => {
+    it('reroutes by price, active workload, and oldest assignment', async () => {
       transaction.order.findFirst.mockResolvedValue(pendingOrder);
-      transaction.deliveryCompany.findFirst.mockResolvedValue({
-        userId: 'company-b',
-        deliveryPrice: '3.000',
-      });
+      transaction.deliveryCompany.findMany.mockResolvedValue([
+        {
+          userId: 'company-b',
+          deliveryPrice: '3.000',
+          _count: { orders: 2 },
+          orders: [{ createdAt: new Date('2026-01-01') }],
+        },
+        {
+          userId: 'company-c',
+          deliveryPrice: '3.000',
+          _count: { orders: 0 },
+          orders: [{ createdAt: new Date('2026-02-01') }],
+        },
+        {
+          userId: 'company-d',
+          deliveryPrice: '3.000',
+          _count: { orders: 0 },
+          orders: [{ createdAt: new Date('2025-12-01') }],
+        },
+        {
+          userId: 'company-e',
+          deliveryPrice: '4.000',
+          _count: { orders: 0 },
+          orders: [],
+        },
+      ]);
       transaction.order.update.mockResolvedValue({
         id: 'order-1',
         pickupCode: '123456',
@@ -83,14 +105,13 @@ describe('OrdersService', () => {
           reason: 'No available drivers',
         },
       });
-      expect(transaction.deliveryCompany.findFirst).toHaveBeenCalledWith(
+      expect(transaction.deliveryCompany.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             coverageZones: { has: 'AMMAN_CENTRAL' },
             user: { isActive: true },
             orderRejections: { none: { orderId: 'order-1' } },
           }),
-          orderBy: [{ deliveryPrice: 'asc' }, { userId: 'asc' }],
         }),
       );
       expect(transaction.order.update).toHaveBeenCalledWith(
@@ -99,7 +120,7 @@ describe('OrdersService', () => {
             status: OrderStatus.PENDING,
             paymentStatus: PaymentStatus.PENDING,
             rejectionReason: null,
-            deliveryCompany: { connect: { userId: 'company-b' } },
+            deliveryCompany: { connect: { userId: 'company-d' } },
           }),
         }),
       );
@@ -118,7 +139,7 @@ describe('OrdersService', () => {
 
     it('finally rejects and unassigns the order when no company remains', async () => {
       transaction.order.findFirst.mockResolvedValue(pendingOrder);
-      transaction.deliveryCompany.findFirst.mockResolvedValue(null);
+      transaction.deliveryCompany.findMany.mockResolvedValue([]);
       transaction.order.update.mockResolvedValue({
         id: 'order-1',
         pickupCode: '123456',

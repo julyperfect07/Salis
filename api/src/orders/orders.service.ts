@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { randomInt } from 'crypto';
 import type { Prisma } from '../../generated/prisma/client';
-import { OrderStatus, PaymentStatus, Role } from '../../generated/prisma/enums';
+import {
+  DeliveryZone,
+  OrderStatus,
+  PaymentStatus,
+  Role,
+} from '../../generated/prisma/enums';
 import type { JwtUser } from '../auth/types/jwt-user.type';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssignDriverDto } from './dto/assign-driver.dto';
@@ -17,6 +22,13 @@ import { VerifyPickupCodeDto } from './dto/verify-pickup-code.dto';
 import { RejectOrderDto } from './dto/reject-order.dto';
 
 const COMMISSION_RATE = 0.025;
+
+const DELIVERY_ACTIVE_STATUSES = [
+  OrderStatus.PENDING,
+  OrderStatus.ACCEPTED,
+  OrderStatus.PICKED_UP,
+  OrderStatus.OUT_FOR_DELIVERY,
+] as const;
 
 const orderInclude = {
   shopOwner: {
@@ -62,6 +74,72 @@ const orderInclude = {
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async findBestDeliveryCompany(
+    client: { deliveryCompany: Prisma.TransactionClient['deliveryCompany'] },
+    deliveryZone: DeliveryZone,
+    rejectedOrderId?: string,
+  ) {
+    const companies = await client.deliveryCompany.findMany({
+      where: {
+        coverageZones: {
+          has: deliveryZone,
+        },
+        user: {
+          isActive: true,
+        },
+        ...(rejectedOrderId && {
+          orderRejections: {
+            none: {
+              orderId: rejectedOrderId,
+            },
+          },
+        }),
+      },
+      select: {
+        userId: true,
+        deliveryPrice: true,
+        _count: {
+          select: {
+            orders: {
+              where: {
+                status: {
+                  in: [...DELIVERY_ACTIVE_STATUSES],
+                },
+              },
+            },
+          },
+        },
+        orders: {
+          select: {
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
+      },
+    });
+
+    return companies.sort((left, right) => {
+      const priceDifference =
+        Number(left.deliveryPrice) - Number(right.deliveryPrice);
+      if (priceDifference !== 0) return priceDifference;
+
+      const workloadDifference = left._count.orders - right._count.orders;
+      if (workloadDifference !== 0) return workloadDifference;
+
+      const leftLastAssignment =
+        left.orders[0]?.createdAt.getTime() ?? Number.NEGATIVE_INFINITY;
+      const rightLastAssignment =
+        right.orders[0]?.createdAt.getTime() ?? Number.NEGATIVE_INFINITY;
+      const waitingTimeDifference = leftLastAssignment - rightLastAssignment;
+      if (waitingTimeDifference !== 0) return waitingTimeDifference;
+
+      return left.userId.localeCompare(right.userId);
+    })[0];
+  }
 
   // Ensure the user is a shop owner
   private ensureShopOwner(user: JwtUser) {
@@ -252,24 +330,10 @@ export class OrdersService {
       throw new NotFoundException('One or more active products were not found');
     }
 
-    const deliveryCompany = await this.prisma.deliveryCompany.findFirst({
-      where: {
-        coverageZones: {
-          has: deliveryZone,
-        },
-        user: {
-          isActive: true,
-        },
-      },
-      orderBy: [
-        {
-          deliveryPrice: 'asc',
-        },
-        {
-          userId: 'asc',
-        },
-      ],
-    });
+    const deliveryCompany = await this.findBestDeliveryCompany(
+      this.prisma,
+      deliveryZone,
+    );
 
     if (!deliveryCompany) {
       throw new NotFoundException(
@@ -629,29 +693,11 @@ export class OrdersService {
       });
 
       const nextDeliveryCompany = order.deliveryZone
-        ? await transaction.deliveryCompany.findFirst({
-            where: {
-              coverageZones: {
-                has: order.deliveryZone,
-              },
-              user: {
-                isActive: true,
-              },
-              orderRejections: {
-                none: {
-                  orderId,
-                },
-              },
-            },
-            orderBy: [
-              {
-                deliveryPrice: 'asc',
-              },
-              {
-                userId: 'asc',
-              },
-            ],
-          })
+        ? await this.findBestDeliveryCompany(
+            transaction,
+            order.deliveryZone,
+            orderId,
+          )
         : null;
 
       const updatedOrder = await transaction.order.update({
