@@ -23,6 +23,7 @@ import { UpdateDeliveryCompanyProfileDto } from './dto/update-delivery-company-p
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
 import { DriverQueryDto } from './dto/driver-query.dto';
+import { UpdateShopLocationDto } from './dto/update-shop-location.dto';
 
 @Controller('users')
 export class UsersController {
@@ -30,7 +31,10 @@ export class UsersController {
 
   @Post()
   @UseGuards(JwtGuard)
-  createUser(@CurrentUser() currentUser, @Body() createUserDto: CreateUserDto) {
+  createUser(
+    @CurrentUser() currentUser: JwtUser,
+    @Body() createUserDto: CreateUserDto,
+  ) {
     if (currentUser.role !== Role.ADMIN) {
       throw new ForbiddenException('Admin access required');
     }
@@ -83,6 +87,15 @@ export class UsersController {
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.usersService.updateMyProfile(user, updateProfileDto);
+  }
+
+  @Patch('me/shop-location')
+  @UseGuards(JwtGuard)
+  updateShopLocation(
+    @CurrentUser() user: JwtUser,
+    @Body() dto: UpdateShopLocationDto,
+  ) {
+    return this.usersService.updateShopLocation(user, dto);
   }
 
   // Change the logged-in user's password

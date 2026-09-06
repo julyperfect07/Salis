@@ -52,7 +52,7 @@ model User {
   refreshTokenHash String?
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt        DateTime @default(now()) @updatedAt
 
   shopOwner       ShopOwner?
   driver          Driver?
@@ -63,7 +63,9 @@ model User {
 }
 
 model ShopOwner {
-  userId String @id
+  userId    String   @id
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   products Product[]
@@ -102,7 +104,7 @@ model Product {
   isActive    Boolean  @default(true)
   shopOwnerId String
   createdAt   DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 
   shopOwner  ShopOwner   @relation(fields: [shopOwnerId], references: [userId])
   orderItems OrderItem[]
@@ -135,10 +137,10 @@ model Order {
   pickupCode     String  @unique
   pickupCodeUsed Boolean @default(false)
 
-  deliveryZone  DeliveryZone?
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-  returnReason  String?
+  deliveryZone    DeliveryZone?
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  returnReason    String?
   rejectionReason String?
 
   createdAt DateTime @default(now())

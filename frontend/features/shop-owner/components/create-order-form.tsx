@@ -26,7 +26,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "@/i18n/navigation";
 import { getApiErrorMessage } from "@/lib/api/error-message";
-import { LocationPicker } from "./location-picker";
+import { LocationPicker } from "@/components/shared/location-picker";
+import { PhoneInput } from "@/components/shared/phone-input";
 import { useCreateOrder, useProducts } from "../use-shop-owner";
 
 const zones = [
@@ -142,7 +143,7 @@ export function CreateOrderForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="customer-phone">{t("orders.create.phone")}</Label>
-              <Input
+              <PhoneInput
                 id="customer-phone"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}

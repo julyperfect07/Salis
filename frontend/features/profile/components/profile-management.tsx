@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import {
   Camera,
   LoaderCircle,
+  LocateFixed,
   LockKeyhole,
+  MapPin,
   Save,
   Truck,
   UserRound,
@@ -19,6 +21,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PhoneInput } from "@/components/shared/phone-input";
+import { LocationPicker, type Coordinates } from "@/components/shared/location-picker";
 import type {
   AdminUserDetails,
   DeliveryZone,
@@ -28,6 +32,7 @@ import {
   useProfile,
   useUpdateDeliveryProfile,
   useUpdateProfile,
+  useUpdateShopLocation,
   useUploadAvatar,
 } from "../use-profile";
 
@@ -141,7 +146,7 @@ function BasicProfileForm({ user }: { user: AdminUserDetails }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="profile-phone">{t("account.phone")}</Label>
-            <Input
+            <PhoneInput
               id="profile-phone"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
@@ -161,6 +166,44 @@ function BasicProfileForm({ user }: { user: AdminUserDetails }) {
             </Button>
           </div>
         </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ShopLocationForm({ user }: { user: AdminUserDetails }) {
+  const t = useTranslations("Profile");
+  const mutation = useUpdateShopLocation();
+  const shop = user.shopOwner!;
+  const [location, setLocation] = useState<Coordinates | null>(
+    shop.latitude && shop.longitude
+      ? { lat: Number(shop.latitude), lng: Number(shop.longitude) }
+      : null,
+  );
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) return toast.error(t("messages.locationUnavailable"));
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => setLocation({ lat: Number(coords.latitude.toFixed(6)), lng: Number(coords.longitude.toFixed(6)) }),
+      () => toast.error(t("messages.locationUnavailable")),
+    );
+  }
+
+  return (
+    <Card className="rounded-3xl lg:col-span-2">
+      <CardHeader><CardTitle className="flex items-center gap-2"><MapPin className="size-5 text-primary" />{t("shopLocation.title")}</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{t("shopLocation.description")}</p>
+          <Button type="button" variant="outline" onClick={useCurrentLocation}><LocateFixed className="size-4" />{t("shopLocation.useMyLocation")}</Button>
+        </div>
+        <LocationPicker value={location} onChange={setLocation} ariaLabel={t("shopLocation.title")} />
+        <Button disabled={!location || mutation.isPending} onClick={() => location && mutation.mutate(
+          { latitude: location.lat, longitude: location.lng },
+          { onSuccess: () => toast.success(t("messages.locationSaved")), onError: () => toast.error(t("messages.locationError")) },
+        )}>
+          {mutation.isPending ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{t("shopLocation.save")}
+        </Button>
       </CardContent>
     </Card>
   );
@@ -395,6 +438,9 @@ export function ProfileManagement() {
         user={data.user}
       />
       <PasswordForm />
+      {data.user.role === "SHOP_OWNER" && data.user.shopOwner && (
+        <ShopLocationForm key={`shop-${data.user.updatedAt}`} user={data.user} />
+      )}
       {data.user.role === "DELIVERY_COMPANY" && data.user.deliveryCompany && (
         <DeliveryProfileForm key={data.user.updatedAt} user={data.user} />
       )}

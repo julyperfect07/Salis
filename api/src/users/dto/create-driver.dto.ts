@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
 
 export class CreateDriverDto {
   @IsString()
@@ -13,5 +13,6 @@ export class CreateDriverDto {
   password!: string;
 
   @IsString()
+  @Matches(/^\+?[0-9]{7,20}$/)
   phoneNumber!: string;
 }

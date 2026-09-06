@@ -4,8 +4,11 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsLatitude,
+  IsLongitude,
   IsNumber,
   IsOptional,
+  Matches,
   IsString,
   IsUrl,
   IsUUID,
@@ -27,7 +30,16 @@ export class CreateUserDto {
   password!: string;
 
   @IsString()
+  @Matches(/^\+?[0-9]{7,20}$/)
   phoneNumber!: string;
+
+  @ValidateIf((dto: CreateUserDto) => dto.role === Role.SHOP_OWNER)
+  @IsLatitude()
+  latitude?: number;
+
+  @ValidateIf((dto: CreateUserDto) => dto.role === Role.SHOP_OWNER)
+  @IsLongitude()
+  longitude?: number;
 
   @IsEnum(Role)
   role!: Role;
@@ -38,7 +50,7 @@ export class CreateUserDto {
 
   @ValidateIf((dto: CreateUserDto) => dto.role === Role.DELIVERY_COMPANY)
   @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsNumber({ maxDecimalPlaces: 3 })
   @Min(0)
   deliveryPrice?: number;
 

@@ -17,6 +17,7 @@ import { UpdateDeliveryCompanyProfileDto } from './dto/update-delivery-company-p
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverStatusDto } from './dto/update-driver-status.dto';
 import { DriverQueryDto } from './dto/driver-query.dto';
+import { UpdateShopLocationDto } from './dto/update-shop-location.dto';
 
 @Injectable()
 export class UsersService {
@@ -33,10 +34,6 @@ export class UsersService {
       throw new ConflictException('Email is already in use');
     }
 
-    if (createUserDto.role === Role.ADMIN) {
-      throw new BadRequestException('Creating another admin is not allowed');
-    }
-
     if (
       createUserDto.role === Role.DELIVERY_COMPANY &&
       (createUserDto.deliveryPrice === undefined ||
@@ -47,6 +44,14 @@ export class UsersService {
       throw new BadRequestException(
         'Delivery price, working times and coverage zones are required',
       );
+    }
+
+    if (
+      createUserDto.role === Role.SHOP_OWNER &&
+      (createUserDto.latitude === undefined ||
+        createUserDto.longitude === undefined)
+    ) {
+      throw new BadRequestException('Shop location is required');
     }
 
     if (createUserDto.role === Role.DRIVER) {
@@ -91,6 +96,8 @@ export class UsersService {
         await transaction.shopOwner.create({
           data: {
             userId: user.id,
+            latitude: createUserDto.latitude,
+            longitude: createUserDto.longitude,
           },
         });
       }
@@ -284,6 +291,8 @@ export class UsersService {
 
         shopOwner: {
           select: {
+            latitude: true,
+            longitude: true,
             _count: {
               select: {
                 products: true,
@@ -371,6 +380,22 @@ export class UsersService {
       message: 'Profile updated successfully',
       user: updatedUser,
     };
+  }
+
+  async updateShopLocation(user: JwtUser, dto: UpdateShopLocationDto) {
+    if (user.role !== Role.SHOP_OWNER) {
+      throw new ForbiddenException(
+        'Only shop owners can update a shop location',
+      );
+    }
+
+    const shopOwner = await this.prisma.shopOwner.update({
+      where: { userId: user.id },
+      data: { latitude: dto.latitude, longitude: dto.longitude },
+      select: { userId: true, latitude: true, longitude: true },
+    });
+
+    return { message: 'Shop location updated successfully', shopOwner };
   }
 
   // Verify the current password and save the new password

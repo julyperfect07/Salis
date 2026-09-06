@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/shared/phone-input";
 import { useUpdateAdminUser } from "../use-update-admin-user";
 import type { AdminUser } from "../users.types";
 
@@ -41,7 +42,7 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
       z.object({
         name: z.string().trim().min(2, t("validation.name")),
         email: z.string().trim().email(t("validation.email")),
-        phoneNumber: z.string().trim().min(7, t("validation.phone")),
+        phoneNumber: z.string().trim().regex(/^\+?[0-9]{7,20}$/, t("validation.phone")),
       }),
     [t],
   );
@@ -137,7 +138,7 @@ export function EditUserDialog({ user }: EditUserDialogProps) {
           <div className="space-y-2">
             <Label htmlFor="edit-phone">{t("fields.phone")}</Label>
 
-            <Input
+            <PhoneInput
               id="edit-phone"
               className="rounded-xl"
               aria-invalid={Boolean(errors.phoneNumber)}

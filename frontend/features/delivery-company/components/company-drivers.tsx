@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PhoneInput } from "@/components/shared/phone-input";
 import { usePaginationCorrection } from "@/hooks/use-pagination-correction";
 import {
   useCreateDriver,
@@ -109,7 +110,7 @@ export function CompanyDrivers() {
                 type="email"
                 required
               />
-              <Field label={t("drivers.phone")} name="phone" required />
+              <Field label={t("drivers.phone")} name="phone" phone required minLength={7} />
               <Field
                 label={t("drivers.password")}
                 name="password"
@@ -258,12 +259,14 @@ export function CompanyDrivers() {
 function Field({
   label,
   name,
+  phone,
   ...props
-}: React.ComponentProps<typeof Input> & { label: string; name: string }) {
+}: React.ComponentProps<typeof Input> & { label: string; name: string; phone?: boolean }) {
+  const FieldInput = phone ? PhoneInput : Input;
   return (
     <div className="grid gap-2">
       <Label htmlFor={name}>{label}</Label>
-      <Input id={name} name={name} className="h-11 rounded-xl" {...props} />
+      <FieldInput id={name} name={name} className="h-11 rounded-xl" {...props} />
     </div>
   );
 }

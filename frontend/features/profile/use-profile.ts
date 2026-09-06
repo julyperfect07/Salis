@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { authQueryKey } from "@/features/auth/use-current-user";
-import { changePassword, getProfile, updateDeliveryProfile, updateProfile, uploadAvatar } from "./profile-api";
+import { changePassword, getProfile, updateDeliveryProfile, updateProfile, updateShopLocation, uploadAvatar } from "./profile-api";
 
 export const profileQueryKey = ["profile"] as const;
 
@@ -41,6 +41,14 @@ export function useUpdateDeliveryProfile() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: updateDeliveryProfile,
+    onSuccess: () => client.invalidateQueries({ queryKey: profileQueryKey }),
+  });
+}
+
+export function useUpdateShopLocation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: updateShopLocation,
     onSuccess: () => client.invalidateQueries({ queryKey: profileQueryKey }),
   });
 }

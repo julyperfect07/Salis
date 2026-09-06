@@ -41,6 +41,8 @@ export interface DriverDetails {
 }
 
 export interface ShopOwnerDetails {
+  latitude: string | null;
+  longitude: string | null;
   _count?: {
     products: number;
     orders: number;
@@ -117,6 +119,10 @@ export interface CreateUserInput {
   phoneNumber: string;
   role: UserRole;
   imageUrl?: string;
+
+  // Shop owner fields
+  latitude?: number;
+  longitude?: number;
 
   // Driver fields
   companyId?: string;

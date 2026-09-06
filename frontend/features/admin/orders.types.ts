@@ -20,6 +20,11 @@ interface OrderParty {
   };
 }
 
+interface ShopOwnerParty extends OrderParty {
+  latitude: string | null;
+  longitude: string | null;
+}
+
 export interface AdminOrder {
   id: string;
   customerName: string;
@@ -40,7 +45,7 @@ export interface AdminOrder {
   rejectionReason: string | null;
   createdAt: string;
   updatedAt: string;
-  shopOwner: OrderParty;
+  shopOwner: ShopOwnerParty;
   deliveryCompany: OrderParty | null;
   driver: OrderParty | null;
   orderItems: Array<{

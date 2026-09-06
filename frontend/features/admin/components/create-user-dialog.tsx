@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { LoaderCircle, Plus, UserPlus } from "lucide-react";
+import { LoaderCircle, LocateFixed, MapPin, Plus, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LocationPicker } from "@/components/shared/location-picker";
+import { PhoneInput } from "@/components/shared/phone-input";
 import {
   Select,
   SelectContent,
@@ -52,6 +54,8 @@ interface CreateUserValues {
   openTime?: string;
   closeTime?: string;
   coverageZones: DeliveryZone[];
+  latitude?: number;
+  longitude?: number;
 }
 
 const defaultValues: CreateUserValues = {
@@ -81,7 +85,10 @@ export function CreateUserDialog() {
 
           password: z.string().min(8, t("validation.password")),
 
-          phoneNumber: z.string().trim().min(7, t("validation.phone")),
+          phoneNumber: z.string().trim().regex(/^\+?[0-9]{7,20}$/, t("validation.phone")),
+
+          latitude: z.number().optional(),
+          longitude: z.number().optional(),
 
           role: z.enum(creatableRoles),
 
@@ -102,6 +109,14 @@ export function CreateUserDialog() {
           ),
         })
         .superRefine((values, context) => {
+          if (values.role === "SHOP_OWNER" && (values.latitude === undefined || values.longitude === undefined)) {
+            context.addIssue({
+              code: "custom",
+              path: ["latitude"],
+              message: t("validation.shopLocation"),
+            });
+          }
+
           if (values.role !== "DELIVERY_COMPANY") {
             return;
           }
@@ -161,6 +176,9 @@ export function CreateUserDialog() {
 
   const selectedRole = watch("role");
   const selectedZones = watch("coverageZones");
+  const latitude = watch("latitude");
+  const longitude = watch("longitude");
+  const shopLocation = latitude === undefined || longitude === undefined ? null : { lat: latitude, lng: longitude };
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -183,6 +201,8 @@ export function CreateUserDialog() {
     setValue("openTime", "");
     setValue("closeTime", "");
     setValue("coverageZones", []);
+    setValue("latitude", undefined);
+    setValue("longitude", undefined);
   }
 
   function handleZoneChange(zone: DeliveryZone, checked: boolean) {
@@ -210,6 +230,11 @@ export function CreateUserDialog() {
       input.openTime = values.openTime;
       input.closeTime = values.closeTime;
       input.coverageZones = values.coverageZones;
+    }
+
+    if (values.role === "SHOP_OWNER") {
+      input.latitude = values.latitude;
+      input.longitude = values.longitude;
     }
 
     createUser.mutate(input, {
@@ -290,7 +315,7 @@ export function CreateUserDialog() {
             <div className="space-y-2">
               <Label htmlFor="create-phone">{t("fields.phone")}</Label>
 
-              <Input
+              <PhoneInput
                 id="create-phone"
                 placeholder="0790000000"
                 className="rounded-xl"
@@ -305,6 +330,32 @@ export function CreateUserDialog() {
               )}
             </div>
           </div>
+
+          {selectedRole === "SHOP_OWNER" && (
+            <div className="space-y-3 rounded-2xl border bg-muted/30 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <Label className="flex items-center gap-2"><MapPin className="size-4 text-primary" />{t("fields.shopLocation")}</Label>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("create.shopLocationHint")}</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => navigator.geolocation?.getCurrentPosition(({ coords }) => {
+                  setValue("latitude", Number(coords.latitude.toFixed(6)), { shouldValidate: true });
+                  setValue("longitude", Number(coords.longitude.toFixed(6)), { shouldValidate: true });
+                })}>
+                  <LocateFixed className="size-4" />{t("create.useMyLocation")}
+                </Button>
+              </div>
+              <LocationPicker
+                value={shopLocation}
+                ariaLabel={t("fields.shopLocation")}
+                onChange={({ lat, lng }) => {
+                  setValue("latitude", lat, { shouldValidate: true });
+                  setValue("longitude", lng, { shouldValidate: true });
+                }}
+              />
+              {errors.latitude && <p className="text-xs text-destructive">{errors.latitude.message}</p>}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="create-email">{t("fields.email")}</Label>

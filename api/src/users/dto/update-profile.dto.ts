@@ -1,5 +1,6 @@
 import {
   IsOptional,
+  Matches,
   IsString,
   IsUrl,
   MaxLength,
@@ -9,6 +10,7 @@ import {
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
+  @Matches(/^\+?[0-9]{7,20}$/)
   @MinLength(2)
   @MaxLength(100)
   name?: string;

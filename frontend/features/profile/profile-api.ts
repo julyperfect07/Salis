@@ -27,3 +27,8 @@ export async function updateDeliveryProfile(input: { deliveryPrice: number; open
   const response = await api.patch<{ message: string; deliveryCompany: DeliveryCompanyDetails }>("/users/me/delivery-company", input);
   return response.data;
 }
+
+export async function updateShopLocation(input: { latitude: number; longitude: number }) {
+  const response = await api.patch<{ message: string; shopOwner: { userId: string; latitude: string; longitude: string } }>("/users/me/shop-location", input);
+  return response.data;
+}

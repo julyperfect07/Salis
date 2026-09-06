@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { toast } from "sonner";
 
 import { createUser } from "./users-api";
@@ -24,8 +25,15 @@ export function useCreateUser() {
       });
     },
 
-    onError: () => {
-      toast.error("Could not create the account");
+    onError: (error) => {
+      const message =
+        error instanceof AxiosError &&
+        typeof (error.response?.data as { message?: unknown } | undefined)
+          ?.message === "string"
+          ? (error.response?.data as { message: string }).message
+          : "Could not create the account";
+
+      toast.error(message);
     },
   });
 }

@@ -83,7 +83,9 @@
     "create": {
       "trigger": "Create account",
       "title": "Create account",
-      "description": "Create a shop owner, delivery company, or administrator account."
+      "description": "Create a shop owner, delivery company, or administrator account.",
+      "shopLocationHint": "Pin the shop's pickup location so assigned drivers can navigate to it.",
+      "useMyLocation": "Use my location"
     },
     "edit": {
       "trigger": "Edit account",
@@ -163,7 +165,8 @@
       "deliveryPrice": "Delivery price",
       "openTime": "Opens at",
       "closeTime": "Closes at",
-      "coverageZones": "Coverage zones"
+      "coverageZones": "Coverage zones",
+      "shopLocation": "Shop pickup location"
     },
     "placeholders": {
       "name": "Account name",
@@ -204,7 +207,8 @@
       "deliveryPrice": "Enter a valid delivery price",
       "openTime": "Opening time is required",
       "closeTime": "Closing time is required",
-      "coverageZones": "Select at least one coverage zone"
+      "coverageZones": "Select at least one coverage zone",
+      "shopLocation": "Select the shop pickup location on the map"
     }
   },
   "AdminOrders": {
@@ -539,6 +543,7 @@
       "delivered": "Mark delivered",
       "failed": "Delivery failed",
       "navigate": "Navigate to customer",
+      "navigateToShop": "Navigate to shop",
       "callCustomer": "Call customer",
       "cancel": "Cancel",
       "confirmDelivery": "Confirm delivery",
@@ -635,6 +640,12 @@
       "close": "Closing time",
       "zones": "Coverage zones"
     },
+    "shopLocation": {
+      "title": "Shop pickup location",
+      "description": "Drivers use this pin to navigate to your shop and collect orders.",
+      "useMyLocation": "Use my location",
+      "save": "Save shop location"
+    },
     "roles": {
       "ADMIN": "Administrator",
       "SHOP_OWNER": "Shop owner",
@@ -665,7 +676,10 @@
       "passwordError": "Could not change the password",
       "passwordMismatch": "Passwords do not match",
       "deliverySaved": "Company settings saved successfully",
-      "deliveryError": "Could not save company settings"
+      "deliveryError": "Could not save company settings",
+      "locationSaved": "Shop location saved successfully",
+      "locationError": "Could not save the shop location",
+      "locationUnavailable": "Your current location could not be determined"
     },
     "error": {
       "title": "Could not retrieve your profile",
