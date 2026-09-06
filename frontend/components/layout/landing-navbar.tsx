@@ -12,7 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { LoginDialog } from "@/features/auth/components/login-dialog";
+import { LandingAccountMenu } from "@/features/auth/components/landing-account-menu";
 import { Link } from "@/i18n/navigation";
 
 import { LanguageSwitcher } from "../shared/language-switcher";
@@ -61,7 +61,7 @@ export function LandingNavbar() {
           <ThemeToggle />
 
           <div className="hidden sm:block">
-            <LoginDialog />
+            <LandingAccountMenu />
           </div>
 
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
@@ -102,7 +102,7 @@ export function LandingNavbar() {
                 ))}
 
                 <div className="mt-4 border-t pt-5 sm:hidden">
-                  <LoginDialog />
+                  <LandingAccountMenu />
                 </div>
               </div>
             </SheetContent>
