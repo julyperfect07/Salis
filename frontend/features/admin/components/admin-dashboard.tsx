@@ -415,10 +415,10 @@ export function AdminDashboard() {
         />
 
         <StatCard
-          title={t("cards.unpaidToShops")}
-          value={formatMoney(data.financials.unpaidToShops, locale)}
-          detail={t("cards.unpaidToShopsDetail")}
-          icon={<TrendingUp className="size-5" />}
+          title={t("cards.productSales")}
+          value={formatMoney(data.financials.productsTotal, locale)}
+          detail={t("cards.productSalesDetail")}
+          icon={<ShoppingBag className="size-5" />}
         />
       </section>
     </div>

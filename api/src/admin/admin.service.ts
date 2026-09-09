@@ -34,7 +34,6 @@ export class AdminService {
       activeProducts,
       orderGroups,
       deliveredFinancials,
-      unpaidFinancials,
     ] = await Promise.all([
       this.prisma.user.groupBy({
         by: ['role'],
@@ -76,17 +75,6 @@ export class AdminService {
           deliveryCompanyCommission: true,
         },
       }),
-
-      this.prisma.order.aggregate({
-        where: {
-          status: OrderStatus.DELIVERED,
-          paymentStatus: PaymentStatus.COLLECTED,
-        },
-        _sum: {
-          totalPrice: true,
-          shopCommission: true,
-        },
-      }),
     ]);
 
     const userCounts = Object.fromEntries(
@@ -115,12 +103,6 @@ export class AdminService {
 
     const deliveryCompanyCommissions = Number(
       deliveredFinancials._sum.deliveryCompanyCommission ?? 0,
-    );
-
-    const unpaidProductTotal = Number(unpaidFinancials._sum.totalPrice ?? 0);
-
-    const unpaidShopCommission = Number(
-      unpaidFinancials._sum.shopCommission ?? 0,
     );
 
     return {
@@ -160,7 +142,6 @@ export class AdminService {
         platformRevenue: (shopCommissions + deliveryCompanyCommissions).toFixed(
           3,
         ),
-        unpaidToShops: (unpaidProductTotal - unpaidShopCommission).toFixed(3),
       },
     };
   }

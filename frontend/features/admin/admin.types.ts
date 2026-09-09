@@ -35,6 +35,5 @@ export interface AdminDashboardResponse {
     deliveryFees: string;
     customerTotal: string;
     platformRevenue: string;
-    unpaidToShops: string;
   };
 }

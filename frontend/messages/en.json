@@ -17,8 +17,8 @@
       "customerPaymentsDetail": "Total amount charged to customers",
       "deliveryFees": "Delivery fees",
       "deliveryFeesDetail": "Delivery fees recorded by the platform",
-      "unpaidToShops": "Unpaid to shops",
-      "unpaidToShopsDetail": "Payments still awaiting settlement"
+      "productSales": "Product sales",
+      "productSalesDetail": "Value of products in delivered orders"
     },
     "chart": {
       "title": "Order activity",

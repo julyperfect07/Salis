@@ -33,7 +33,9 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT ?? 3001);
 
-  await app.listen(port);
+  // Render and other container platforms require the server to accept traffic
+  // from outside the container, not only from localhost.
+  await app.listen(port, '0.0.0.0');
 
   console.log(`API running on http://localhost:${port}`);
 }
